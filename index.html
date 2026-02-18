@@ -15,7 +15,8 @@ font-size:14px;
 }
 button { background:#000; color:#fff; font-size:16px; cursor:pointer;}
 button:hover { background:#333;}
-.result { background:#f9f9f9; padding:15px; margin-top:15px; border-radius:6px;}
+.result { background:#f9f9f9; padding:15px; margin-top:15px; border-radius:6px; white-space:pre-line;}
+.warning { color:#c00000; font-weight:bold; margin-top:10px;}
 </style>
 
 <script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places"></script>
@@ -136,8 +137,8 @@ parseInt(document.getElementById("deliveryStairs").value) +
 parseInt(document.getElementById("viaStairs").value);
 
 let directionsService = new google.maps.DirectionsService();
-
 let waypoints = [];
+
 if (via !== "") {
 waypoints.push({ location: via, stopover: true });
 }
@@ -163,29 +164,55 @@ let miles = distance / 1609.34;
 let costMiles = miles * 1.5;
 let costHours = hours * rate;
 
-let stairCost = 0;
 let men = 0;
+if (rate === 55) men = 1;
+if (rate === 70) men = 2;
+if (rate === 90) men = 3;
 
+let stairCost = 0;
 if (rate !== 45) {
-men = rate === 55 ? 1 : rate === 70 ? 2 : 3;
 stairCost = totalFlights * 10 * men;
 }
 
 let total = costHours + costMiles + stairCost;
 
-// TIME CALCULATION
+// ===== PROFESSIONAL TIME CALCULATION =====
+
 let driveMinutes = duration / 60;
+
 let loadingMinutes = 0;
 let stairsMinutes = 0;
 
 if (rate !== 45) {
-loadingMinutes = 60; 
-stairsMinutes = totalFlights * 10;
+
+if (men === 1) loadingMinutes = 90;
+if (men === 2) loadingMinutes = 60;
+if (men === 3) loadingMinutes = 45;
+
+let minutesPerFlight = 10;
+if (men === 2) minutesPerFlight = 8;
+if (men === 3) minutesPerFlight = 6;
+
+stairsMinutes = totalFlights * minutesPerFlight;
 }
 
 let totalMinutes = driveMinutes + loadingMinutes + stairsMinutes;
-let totalHours = Math.floor(totalMinutes / 60);
+
+// Auto adjust booked hours if insufficient
+let requiredHours = Math.ceil(totalMinutes / 60);
+
+let warningMessage = "";
+if (requiredHours > hours) {
+warningMessage = `
+⚠️ Estimated job duration exceeds booked hours.
+Recommended minimum booking: ${requiredHours} hours.
+`;
+}
+
+// Format time
+let totalHoursFormatted = Math.floor(totalMinutes / 60);
 let remainingMinutes = Math.ceil(totalMinutes % 60);
+let formattedTime = `${totalHoursFormatted}h ${remainingMinutes}m`;
 
 let breakdown = `
 Hours charged: ${hours}
@@ -195,11 +222,12 @@ Cost miles: £${costMiles.toFixed(2)}
 Total flights: ${totalFlights}
 Cost stairs: £${stairCost.toFixed(2)}
 Total final: £${total.toFixed(2)}
-Estimated total time: ${totalHours}h ${remainingMinutes}m
+Estimated total time: ${formattedTime}
+${warningMessage}
 `;
 
 document.getElementById("result").style.display = "block";
-document.getElementById("result").innerHTML = breakdown;
+document.getElementById("result").innerText = breakdown;
 document.getElementById("breakdown").value = breakdown;
 
 setTimeout(function(){
