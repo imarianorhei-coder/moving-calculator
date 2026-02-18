@@ -7,16 +7,14 @@
 
 <style>
 body { font-family: Arial; background:#f4f4f4; margin:0; padding:20px;}
-.container { max-width:800px; margin:auto; background:#fff; padding:20px; border-radius:8px; }
-h2 { text-align:center; }
+.container { max-width:800px; margin:auto; background:#fff; padding:20px; border-radius:8px;}
+h2 { text-align:center;}
 input, select, textarea, button {
 width:100%; padding:10px; margin:8px 0; border-radius:4px; border:1px solid #ccc;
 }
-button {
-background:#000; color:#fff; font-size:16px; cursor:pointer;
-}
-button:hover { background:#333; }
-.result { background:#f9f9f9; padding:15px; margin-top:15px; }
+button { background:#000; color:#fff; font-size:16px; cursor:pointer;}
+button:hover { background:#333;}
+.result { background:#f9f9f9; padding:15px; margin-top:15px;}
 </style>
 
 <script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places"></script>
@@ -100,18 +98,17 @@ button:hover { background:#333; }
 </form>
 
 <div id="result" class="result" style="display:none;"></div>
-
 </div>
 
 <script>
 
-// Restrict date to future
+// Restrict date to future only
 const dateInput = document.getElementById("moveDate");
 const now = new Date();
 now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
 dateInput.min = now.toISOString().slice(0,16);
 
-// Google Autocomplete
+// Autocomplete UK
 function initAutocomplete() {
 const options = {
 componentRestrictions: { country: "uk" },
@@ -134,9 +131,10 @@ let collection = document.getElementById("collection").value;
 let delivery = document.getElementById("delivery").value;
 let via = document.getElementById("via").value;
 
-let totalFlights = parseInt(document.getElementById("collectionStairs").value)
-+ parseInt(document.getElementById("deliveryStairs").value)
-+ parseInt(document.getElementById("viaStairs").value);
+let totalFlights =
+parseInt(document.getElementById("collectionStairs").value) +
+parseInt(document.getElementById("deliveryStairs").value) +
+parseInt(document.getElementById("viaStairs").value);
 
 let directionsService = new google.maps.DirectionsService();
 
@@ -162,7 +160,7 @@ distance += leg.distance.value;
 duration += leg.duration.value;
 });
 
-let miles = (distance / 1609.34);
+let miles = distance / 1609.34;
 let costMiles = miles * 1.5;
 let costHours = hours * rate;
 
@@ -181,7 +179,7 @@ Miles: ${miles.toFixed(2)}
 Cost miles: £${costMiles.toFixed(2)}
 Total flights: ${totalFlights}
 Cost stairs: £${stairCost.toFixed(2)}
-Total: £${total.toFixed(2)}
+Total final: £${total.toFixed(2)}
 Estimated drive time: ${(duration/60).toFixed(0)} minutes
 `;
 
@@ -204,4 +202,3 @@ alert("Could not calculate route. Please check addresses.");
 </script>
 
 </body>
-</html>
