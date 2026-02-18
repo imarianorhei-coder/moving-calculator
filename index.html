@@ -2,91 +2,106 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Fast Any Moves - Instant Quote</title>
+<title>Fast Any Moves - Get a Free Quote</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f4f4;
-  padding: 20px;
-}
-
-.container {
-  max-width: 600px;
-  margin: auto;
-  background: white;
-  padding: 25px;
-  border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.1);
-}
-
-h2 {
-  text-align: center;
-}
-
-input, select {
-  width: 100%;
-  padding: 10px;
-  margin: 8px 0;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-button {
-  width: 100%;
-  padding: 12px;
-  background: black;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-button:hover {
-  background: #333;
-}
-
-.result {
-  margin-top: 20px;
-  font-weight: bold;
-}
+body {font-family: Arial, sans-serif;background:#f4f4f4;padding:20px;}
+.container {max-width:650px;margin:auto;background:white;padding:25px;border-radius:10px;box-shadow:0 0 15px rgba(0,0,0,0.1);}
+h2 {text-align:center;}
+input, select, textarea {width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #ccc;}
+button {width:100%;padding:14px;background:black;color:white;border:none;border-radius:6px;font-size:16px;cursor:pointer;}
+button:hover {background:#333;}
+.result {margin-top:15px;font-weight:bold;}
+small {color:#777;}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-<h2>Instant Moving Quote</h2>
+<h2>Get a Free Quote</h2>
+<p>Help us serve you better</p>
 
-<label>Pickup Postcode</label>
-<input type="text" id="pickup">
+<form id="quoteForm" action="https://formsubmit.co/imarianorhei@gmail.com" method="POST">
 
-<label>Delivery Postcode</label>
-<input type="text" id="delivery">
+<input type="hidden" name="_subject" value="New Moving Quote Request">
+<input type="hidden" name="_captcha" value="false">
+<input type="hidden" name="Quote Breakdown" id="finalPrice">
 
-<label>Select Service</label>
-<select id="service">
-  <option value="45">Driver Only - £45/hour</option>
-  <option value="55">1 Man + Van - £55/hour</option>
-  <option value="70">2 Men + Van - £70/hour</option>
-  <option value="90">3 Men + Van - £90/hour</option>
+<label>Name / Surname *</label>
+<input type="text" name="Name" required>
+
+<label>Phone Number *</label>
+<input type="text" name="Phone" required>
+
+<label>Email Address *</label>
+<input type="email" name="Email" required>
+
+<label>When do you plan to move? *</label>
+<input type="datetime-local" name="Move Date" required>
+
+<label>How many hours do you need? *</label>
+<input type="number" id="hours" name="Hours" min="2" value="2" required>
+
+<label>Do you need help with loading and unloading? *</label>
+<select id="help" name="Help Required" required>
+<option value="">Select</option>
+<option value="45">No help required - £45/hour</option>
+<option value="55">1 Man - £55/hour</option>
+<option value="70">2 Men - £70/hour</option>
+<option value="90">3 Men - £90/hour</option>
 </select>
 
-<label>Hours (Minimum 2)</label>
-<input type="number" id="hours" min="2" value="2">
+<label>Collection Full Address *</label>
+<input type="text" id="collection" name="Collection Address" required>
 
-<label>Flights of Stairs</label>
-<input type="number" id="stairs" value="0">
+<label>Collection Stairs *</label>
+<select id="stairs1" name="Collection Stairs" required>
+<option value="0">No stairs</option>
+<option value="1">1 Flight</option>
+<option value="2">2 Flights</option>
+<option value="3">3 Flights</option>
+<option value="4">4 Flights</option>
+</select>
 
-<button onclick="calculate()">Calculate Price</button>
+<label>Via Address (optional)</label>
+<input type="text" id="via" name="Via Address">
+
+<label>Via Stairs</label>
+<select id="stairs2" name="Via Stairs">
+<option value="0">No stairs</option>
+<option value="1">1 Flight</option>
+<option value="2">2 Flights</option>
+<option value="3">3 Flights</option>
+<option value="4">4 Flights</option>
+</select>
+
+<label>Delivery Full Address *</label>
+<input type="text" id="delivery" name="Delivery Address" required>
+
+<label>Delivery Stairs *</label>
+<select id="stairs3" name="Delivery Stairs" required>
+<option value="0">No stairs</option>
+<option value="1">1 Flight</option>
+<option value="2">2 Flights</option>
+<option value="3">3 Flights</option>
+<option value="4">4 Flights</option>
+</select>
+
+<label>Any special requirements or additional information?</label>
+<textarea name="Additional Info"></textarea>
+
+<button type="button" onclick="calculate()">Calculate Price</button>
 
 <div class="result" id="result"></div>
 
-<p style="font-size:12px;margin-top:10px;">
-Estimated price. Final price may vary depending on access and additional requirements.
-</p>
+<br>
+<button type="submit">Submit</button>
+
+</form>
+
+<small>Estimated price. Final price may vary depending on access and additional requirements.</small>
 
 </div>
 
@@ -94,54 +109,81 @@ Estimated price. Final price may vary depending on access and additional require
 
 <script>
 function calculate() {
-  var service = new google.maps.DistanceMatrixService();
-  var pickup = document.getElementById("pickup").value;
-  var delivery = document.getElementById("delivery").value;
-  var hourlyRate = parseFloat(document.getElementById("service").value);
-  var hours = Math.max(parseInt(document.getElementById("hours").value), 2);
-  var flights = parseInt(document.getElementById("stairs").value);
 
-  service.getDistanceMatrix({
-    origins: [pickup],
-    destinations: [delivery],
-    travelMode: 'DRIVING',
-    unitSystem: google.maps.UnitSystem.IMPERIAL
-  }, function(response, status) {
+var service = new google.maps.DistanceMatrixService();
 
-    if (status !== "OK") {
-      document.getElementById("result").innerHTML = "Error calculating distance.";
-      return;
-    }
+var collection = document.getElementById("collection").value;
+var via = document.getElementById("via").value;
+var delivery = document.getElementById("delivery").value;
 
-    var element = response.rows[0].elements[0];
+var hourlyRate = parseFloat(document.getElementById("help").value);
+var hours = Math.max(parseInt(document.getElementById("hours").value),2);
 
-    if (element.status !== "OK") {
-      document.getElementById("result").innerHTML = "Invalid postcode.";
-      return;
-    }
+if(!hourlyRate || !collection || !delivery){
+document.getElementById("result").innerHTML="Please complete required fields and calculate first.";
+return;
+}
 
-    var miles = element.distance.value / 1609.34;
-    var duration = element.duration.text;
+var destinations = via ? [via, delivery] : [delivery];
 
-    var hourlyCost = hourlyRate * hours;
-    var distanceCost = miles * 1.5;
+service.getDistanceMatrix({
+origins:[collection],
+destinations:destinations,
+travelMode:'DRIVING',
+unitSystem:google.maps.UnitSystem.IMPERIAL
+}, function(response,status){
 
-    var menCount = 0;
-    if (hourlyRate == 55) menCount = 1;
-    if (hourlyRate == 70) menCount = 2;
-    if (hourlyRate == 90) menCount = 3;
+if(status!=="OK"){
+document.getElementById("result").innerHTML="Error calculating distance.";
+return;
+}
 
-    var stairsCost = flights * 10 * menCount * hours;
+var miles = 0;
+for(var i=0;i<response.rows[0].elements.length;i++){
+miles += response.rows[0].elements[i].distance.value;
+}
+miles = miles/1609.34;
 
-    var total = hourlyCost + distanceCost + stairsCost;
+var duration = response.rows[0].elements[response.rows[0].elements.length - 1].duration.text;
 
-    document.getElementById("result").innerHTML =
-      "Distance: " + miles.toFixed(1) + " miles<br>" +
-      "Estimated Drive Time: " + duration + "<br>" +
-      "Estimated Price: £" + total.toFixed(2);
-  });
+var menCount = 0;
+if(hourlyRate==55) menCount=1;
+if(hourlyRate==70) menCount=2;
+if(hourlyRate==90) menCount=3;
+
+var stairsTotal = parseInt(document.getElementById("stairs1").value)
++ parseInt(document.getElementById("stairs2").value)
++ parseInt(document.getElementById("stairs3").value);
+
+var stairsCost = menCount>0 ? stairsTotal * 10 * menCount * hours : 0;
+
+var hourlyCost = hourlyRate * hours;
+var distanceCost = miles * 1.5;
+var total = hourlyCost + distanceCost + stairsCost;
+
+var breakdown =
+"Hours charged (min 2 applied): " + hours + " hours\n" +
+"Hourly cost: £" + hourlyCost.toFixed(2) + "\n\n" +
+"Distance: " + miles.toFixed(1) + " miles\n" +
+"Estimated drive time: " + duration + "\n" +
+"Distance cost: £" + distanceCost.toFixed(2) + "\n\n" +
+"Total flights: " + stairsTotal + "\n" +
+"Stairs cost: £" + stairsCost.toFixed(2) + "\n\n" +
+"TOTAL ESTIMATED PRICE: £" + total.toFixed(2);
+
+document.getElementById("result").innerHTML =
+"<strong>Quote Breakdown:</strong><br><br>" +
+"Hours charged (min 2 applied): " + hours + " hours<br>" +
+"Hourly cost: £" + hourlyCost.toFixed(2) + "<br><br>" +
+"Distance: " + miles.toFixed(1) + " miles<br>" +
+"Estimated drive time: " + duration + "<br>" +
+"Distance cost: £" + distanceCost.toFixed(2) + "<br><br>" +
+"Total flights: " + stairsTotal + "<br>" +
+"Stairs cost: £" + stairsCost.toFixed(2) + "<br><br>" +
+"<strong>Total Estimated Price: £" + total.toFixed(2) + "</strong>";
+
+document.getElementById("finalPrice").value = breakdown;
+
+});
 }
 </script>
-
-</body>
-</html>
