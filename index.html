@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Fast Any Moves - Instant Quote</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  padding: 20px;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+h2 {
+  text-align: center;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: black;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+button:hover {
+  background: #333;
+}
+
+.result {
+  margin-top: 20px;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h2>Instant Moving Quote</h2>
+
+<label>Pickup Postcode</label>
+<input type="text" id="pickup">
+
+<label>Delivery Postcode</label>
+<input type="text" id="delivery">
+
+<label>Select Service</label>
+<select id="service">
+  <option value="45">Driver Only - £45/hour</option>
+  <option value="55">1 Man + Van - £55/hour</option>
+  <option value="70">2 Men + Van - £70/hour</option>
+  <option value="90">3 Men + Van - £90/hour</option>
+</select>
+
+<label>Hours (Minimum 2)</label>
+<input type="number" id="hours" min="2" value="2">
+
+<label>Flights of Stairs</label>
+<input type="number" id="stairs" value="0">
+
+<button onclick="calculate()">Calculate Price</button>
+
+<div class="result" id="result"></div>
+
+<p style="font-size:12px;margin-top:10px;">
+Estimated price. Final price may vary depending on access and additional requirements.
+</p>
+
+</div>
+
+<script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE"></script>
+
+<script>
+function calculate() {
+  var service = new google.maps.DistanceMatrixService();
+  var pickup = document.getElementById("pickup").value;
+  var delivery = document.getElementById("delivery").value;
+  var hourlyRate = parseFloat(document.getElementById("service").value);
+  var hours = Math.max(parseInt(document.getElementById("hours").value), 2);
+  var flights = parseInt(document.getElementById("stairs").value);
+
+  service.getDistanceMatrix({
+    origins: [pickup],
+    destinations: [delivery],
+    travelMode: 'DRIVING',
+    unitSystem: google.maps.UnitSystem.IMPERIAL
+  }, function(response, status) {
+
+    if (status !== "OK") {
+      document.getElementById("result").innerHTML = "Error calculating distance.";
+      return;
+    }
+
+    var element = response.rows[0].elements[0];
+
+    if (element.status !== "OK") {
+      document.getElementById("result").innerHTML = "Invalid postcode.";
+      return;
+    }
+
+    var miles = element.distance.value / 1609.34;
+    var duration = element.duration.text;
+
+    var hourlyCost = hourlyRate * hours;
+    var distanceCost = miles * 1.5;
+
+    var menCount = 0;
+    if (hourlyRate == 55) menCount = 1;
+    if (hourlyRate == 70) menCount = 2;
+    if (hourlyRate == 90) menCount = 3;
+
+    var stairsCost = flights * 10 * menCount * hours;
+
+    var total = hourlyCost + distanceCost + stairsCost;
+
+    document.getElementById("result").innerHTML =
+      "Distance: " + miles.toFixed(1) + " miles<br>" +
+      "Estimated Drive Time: " + duration + "<br>" +
+      "Estimated Price: £" + total.toFixed(2);
+  });
+}
+</script>
+
+</body>
+</html>
