@@ -1,20 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Instant Moving Quote</title>
 
 <style>
-body { font-family: Arial; background:#f4f4f4; margin:0; padding:20px;}
-.container { max-width:800px; margin:auto; background:#fff; padding:20px; border-radius:8px;}
-h2 { text-align:center;}
+body { font-family: Arial, sans-serif; background:#f4f4f4; margin:0; padding:20px;}
+.container { max-width:800px; margin:auto; background:#fff; padding:25px; border-radius:8px;}
+h2 { text-align:center; margin-bottom:20px;}
 input, select, textarea, button {
-width:100%; padding:10px; margin:8px 0; border-radius:4px; border:1px solid #ccc;
+width:100%; padding:10px; margin:8px 0; border-radius:5px; border:1px solid #ccc;
+font-size:14px;
 }
 button { background:#000; color:#fff; font-size:16px; cursor:pointer;}
 button:hover { background:#333;}
-.result { background:#f9f9f9; padding:15px; margin-top:15px;}
+.result { background:#f9f9f9; padding:15px; margin-top:15px; border-radius:6px;}
 </style>
 
 <script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places"></script>
@@ -26,7 +27,6 @@ button:hover { background:#333;}
 <h2>Instant Moving Quote</h2>
 
 <form id="quoteForm" action="https://formsubmit.co/imarianorhei@gmail.com" method="POST">
-
 <input type="hidden" name="_captcha" value="false">
 <input type="hidden" name="Quote_Breakdown" id="breakdown">
 
@@ -94,7 +94,6 @@ button:hover { background:#333;}
 <textarea name="Additional_Info"></textarea>
 
 <button type="submit">Get My Instant Quote</button>
-
 </form>
 
 <div id="result" class="result" style="display:none;"></div>
@@ -120,7 +119,7 @@ new google.maps.places.Autocomplete(document.getElementById("via"), options);
 }
 google.maps.event.addDomListener(window, 'load', initAutocomplete);
 
-// Calculation
+// Calculator
 document.getElementById("quoteForm").addEventListener("submit", function(e) {
 e.preventDefault();
 
@@ -180,12 +179,12 @@ let loadingMinutes = 0;
 let stairsMinutes = 0;
 
 if (rate !== 45) {
-loadingMinutes = 60; // 30 min load + 30 unload
+loadingMinutes = 60; 
 stairsMinutes = totalFlights * 10;
 }
 
 let totalMinutes = driveMinutes + loadingMinutes + stairsMinutes;
-let totalHoursFormatted = Math.floor(totalMinutes / 60);
+let totalHours = Math.floor(totalMinutes / 60);
 let remainingMinutes = Math.ceil(totalMinutes % 60);
 
 let breakdown = `
@@ -196,7 +195,7 @@ Cost miles: £${costMiles.toFixed(2)}
 Total flights: ${totalFlights}
 Cost stairs: £${stairCost.toFixed(2)}
 Total final: £${total.toFixed(2)}
-Estimated total time: ${totalHoursFormatted}h ${remainingMinutes}m
+Estimated total time: ${totalHours}h ${remainingMinutes}m
 `;
 
 document.getElementById("result").style.display = "block";
