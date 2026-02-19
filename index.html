@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Instant Moving Quote</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 body{font-family:Arial;background:#f4f6f9;margin:0}
 .container{max-width:700px;margin:40px auto;background:#fff;padding:30px;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.08)}
@@ -16,7 +15,6 @@ button:hover{background:#0056b3}
 .result{margin-top:25px;padding:15px;background:#eef5ff;border-radius:8px}
 </style>
 </head>
-
 <body>
 
 <div class="container">
@@ -27,12 +25,14 @@ button:hover{background:#0056b3}
 <input type="hidden" name="_subject" value="New Moving Quote Request">
 <input type="hidden" name="_captcha" value="false">
 <input type="hidden" name="_template" value="table">
+<input type="hidden" name="_replyto" id="replyto">
+<input type="hidden" name="Quote_Breakdown" id="quoteBreakdown">
 
 <label>Name *</label>
 <input type="text" name="Name" id="name" required>
 
 <label>Phone *</label>
-<input type="text" name="Phone" id="phone" required>
+<input type="text" name="Phone" required>
 
 <label>Email *</label>
 <input type="email" name="Email" id="email" required>
@@ -41,10 +41,10 @@ button:hover{background:#0056b3}
 <input type="datetime-local" name="Move_Date" id="moveDate" required>
 
 <label>Hours (Minimum 2) *</label>
-<input type="number" name="Hours" id="hours" min="2" value="2" required>
+<input type="number" id="hours" min="2" value="2" required>
 
 <label>Do you need help with loading and unloading? *</label>
-<select id="service" name="Service" required>
+<select id="service" required>
 <option value="">Select</option>
 <option value="45">No help required</option>
 <option value="55">1 Man</option>
@@ -56,7 +56,7 @@ button:hover{background:#0056b3}
 <input type="text" name="Collection_Address" id="collection" required>
 
 <label>Is there any flight of stairs / no lift?</label>
-<select id="stairsCollection" name="Collection_Stairs">
+<select id="stairsCollection">
 <option value="0">Ground floor / Lift</option>
 <option value="1">1 Flight</option>
 <option value="2">2 Flights</option>
@@ -68,7 +68,7 @@ button:hover{background:#0056b3}
 <input type="text" name="Via_Address" id="via">
 
 <label>Is there any flight of stairs / no lift?</label>
-<select id="stairsVia" name="Via_Stairs">
+<select id="stairsVia">
 <option value="0">Ground floor / Lift</option>
 <option value="1">1 Flight</option>
 <option value="2">2 Flights</option>
@@ -80,7 +80,7 @@ button:hover{background:#0056b3}
 <input type="text" name="Delivery_Address" id="delivery" required>
 
 <label>Is there any flight of stairs / no lift?</label>
-<select id="stairsDelivery" name="Delivery_Stairs">
+<select id="stairsDelivery">
 <option value="0">Ground floor / Lift</option>
 <option value="1">1 Flight</option>
 <option value="2">2 Flights</option>
@@ -89,9 +89,7 @@ button:hover{background:#0056b3}
 </select>
 
 <label>Additional Information</label>
-<textarea name="Additional_Info" id="info"></textarea>
-
-<input type="hidden" name="Quote_Breakdown" id="quoteBreakdown">
+<textarea name="Additional_Info"></textarea>
 
 <button type="submit">Get My Instant Quote</button>
 
@@ -119,21 +117,22 @@ calculateQuote();
 
 function calculateQuote(){
 
-let hours = parseInt(document.getElementById("hours").value);
+let hoursReserved = parseInt(document.getElementById("hours").value);
 let rate = parseFloat(document.getElementById("service").value);
 
 let stairsCollection = parseInt(document.getElementById("stairsCollection").value);
 let stairsVia = parseInt(document.getElementById("stairsVia").value);
 let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
-
 let stairsTotal = stairsCollection + stairsVia + stairsDelivery;
 
 let collection = document.getElementById("collection").value;
 let via = document.getElementById("via").value;
 let delivery = document.getElementById("delivery").value;
 
-let service = new google.maps.DistanceMatrixService();
+let email = document.getElementById("email").value;
+document.getElementById("replyto").value = email;
 
+let service = new google.maps.DistanceMatrixService();
 let destinations = via ? [via, delivery] : [delivery];
 
 service.getDistanceMatrix({
@@ -154,24 +153,27 @@ totalSeconds+=el.duration.value;
 
 let miles=totalMeters/1609.34;
 let costMiles=miles*1.5;
-let costHours=hours*rate;
-let costStairs = rate===45 ? 0 : stairsTotal*10;
-let total=costHours+costMiles+costStairs;
 
 let loadingSeconds=30*60;
 let stairsSeconds=stairsTotal*10*60;
 let estimatedSeconds=totalSeconds+loadingSeconds+stairsSeconds;
 
-let reservedSeconds=hours*3600;
-if(estimatedSeconds<reservedSeconds){
-estimatedSeconds=reservedSeconds;
-}
+let estimatedHoursDecimal = estimatedSeconds/3600;
+let estimatedRoundedUp = Math.ceil(estimatedHoursDecimal);
+
+let hoursCharged = Math.max(hoursReserved, estimatedRoundedUp);
+
+let costHours=hoursCharged*rate;
+let costStairs = rate===45 ? 0 : stairsTotal*10;
+
+let total=costHours+costMiles+costStairs;
 
 let finalHours=Math.floor(estimatedSeconds/3600);
 let finalMinutes=Math.round((estimatedSeconds%3600)/60);
 
 let breakdown =
-"Hours charged: "+hours+"\n"+
+"Hours reserved: "+hoursReserved+"\n"+
+"Hours charged: "+hoursCharged+"\n"+
 "Cost hours: £"+costHours.toFixed(2)+"\n"+
 "Miles: "+miles.toFixed(2)+"\n"+
 "Cost miles: £"+costMiles.toFixed(2)+"\n"+
@@ -189,7 +191,6 @@ document.getElementById("quoteBreakdown").value = breakdown;
 document.getElementById("quoteForm").submit();
 
 });
-
 }
 
 </script>
