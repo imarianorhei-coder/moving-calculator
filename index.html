@@ -6,65 +6,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{
-font-family:Arial;
-background:#f5f5f5;
-margin:0;
-padding:0;
-}
+body{font-family:Arial;background:#f5f5f5;margin:0;padding:0;}
 .container{
-max-width:750px;
-margin:auto;
-background:white;
-padding:30px;
-margin-top:40px;
-border-radius:10px;
-box-shadow:0 0 15px rgba(0,0,0,0.1);
+max-width:750px;margin:auto;background:white;padding:30px;margin-top:40px;
+border-radius:10px;box-shadow:0 0 15px rgba(0,0,0,0.1);
 }
 h1{text-align:center;}
 p{text-align:center;color:#666;}
 input, select, textarea{
-width:100%;
-padding:10px;
-margin:8px 0;
-border-radius:5px;
-border:1px solid #ccc;
-font-size:14px;
+width:100%;padding:10px;margin:8px 0;border-radius:5px;
+border:1px solid #ccc;font-size:14px;
 }
 button{
-width:100%;
-padding:14px;
-background:#000;
-color:white;
-border:none;
-border-radius:6px;
-font-size:16px;
-cursor:pointer;
-margin-top:10px;
+width:100%;padding:14px;background:#000;color:white;border:none;
+border-radius:6px;font-size:16px;cursor:pointer;margin-top:10px;
 }
 button:hover{background:#333;}
-#result{
-margin-top:20px;
-padding:15px;
-background:#f0f0f0;
-border-radius:6px;
-}
-label{
-font-weight:bold;
-display:block;
-margin-top:12px;
-}
+#result{margin-top:20px;padding:15px;background:#f0f0f0;border-radius:6px;}
+label{font-weight:bold;display:block;margin-top:12px;}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-
 <h1>Instant Moving Quote</h1>
 <p>Help us serve you better</p>
 
-<form id="quoteForm" action="https://formsubmit.co/imarianorhei@gmail.com" method="POST" onsubmit="return calculateQuote(event);">
+<form id="quoteForm" action="https://formsubmit.co/imarianorhei@gmail.com" method="POST">
 
 <input type="hidden" name="_subject" value="New Moving Quote">
 <input type="hidden" name="_captcha" value="false">
@@ -85,7 +54,7 @@ margin-top:12px;
 <input type="number" name="Hours" min="2" value="2" required>
 
 <label>Do you need help with loading and unloading? *</label>
-<select name="Service" required>
+<select id="service" name="Service" required>
 <option value="">Select</option>
 <option value="45">No help required</option>
 <option value="55">1 Man</option>
@@ -132,27 +101,37 @@ margin-top:12px;
 <label>Additional Information</label>
 <textarea name="Additional_Info"></textarea>
 
-<button type="submit">Get My Instant Quote</button>
+<button type="button" onclick="calculateQuote()">Get My Instant Quote</button>
 
 <div id="result"></div>
 
 </form>
-
 </div>
 
 <script>
+/* Prevent past dates */
+const now = new Date();
+now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+document.getElementById("moveDate").min = now.toISOString().slice(0,16);
 
-document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
+function calculateQuote(){
 
-function calculateQuote(event){
-event.preventDefault();
+if(!google || !google.maps){
+alert("Google Maps not loaded");
+return;
+}
 
 const hours = Math.max(2, parseInt(document.querySelector("[name='Hours']").value));
-const rate = parseFloat(document.querySelector("[name='Service']").value);
+const rate = parseFloat(document.getElementById("service").value);
 
 const collection = document.getElementById("collection").value;
 const via = document.getElementById("via").value;
 const delivery = document.getElementById("delivery").value;
+
+if(!collection || !delivery || !rate){
+alert("Please complete all required fields");
+return;
+}
 
 const collectionStairs = parseInt(document.getElementById("collectionStairs").value);
 const viaStairs = parseInt(document.getElementById("viaStairs").value);
@@ -160,7 +139,7 @@ const deliveryStairs = parseInt(document.getElementById("deliveryStairs").value)
 
 const totalFlights = collectionStairs + viaStairs + deliveryStairs;
 
-/* COST calculation */
+/* COST */
 let stairsCost = 0;
 if(rate !== 45){
 stairsCost = totalFlights * 10;
@@ -182,16 +161,15 @@ response.rows[0].elements[0].duration.value
 });
 }
 
-function processCalculation(totalDistance,totalDuration){
+function finish(totalDistance,totalDuration){
 
 const miles = (totalDistance / 1609).toFixed(2);
 const costMiles = (miles * 1.5).toFixed(2);
 const costHours = rate * hours;
 
-/* TIME calculation (independent of booked hours) */
+/* TIME */
 const loadingSeconds = 30 * 60;
 const stairsSeconds = totalFlights * 10 * 60;
-
 const finalSeconds = totalDuration + loadingSeconds + stairsSeconds;
 
 const totalHours = Math.floor(finalSeconds / 3600);
@@ -199,25 +177,16 @@ const totalMinutes = Math.floor((finalSeconds % 3600) / 60);
 
 const totalFinal = (costHours + parseFloat(costMiles) + stairsCost).toFixed(2);
 
-const whatsappMessage = `
-Fast Any Moves Ltd - Instant Quote
-
-Total: £${totalFinal}
-Estimated time: ${totalHours}h ${totalMinutes}m
-Miles: ${miles}
-Flights: ${totalFlights}
-`;
-
-const whatsappLink = https://wa.me/447846769519?text=${encodeURIComponent(whatsappMessage)};
+const whatsappLink =
+"https://wa.me/447846769519?text=" +
+encodeURIComponent(
+"Fast Any Moves Ltd Quote\n\nTotal: £" + totalFinal +
+"\nEstimated time: " + totalHours + "h " + totalMinutes + "m" +
+"\nMiles: " + miles +
+"\nFlights: " + totalFlights
+);
 
 document.getElementById("result").innerHTML = `
-<strong>Hours charged:</strong> ${hours}<br>
-<strong>Cost hours:</strong> £${costHours.toFixed(2)}<br>
-<strong>Miles:</strong> ${miles}<br>
-<strong>Cost miles:</strong> £${costMiles}<br>
-<strong>Total flights:</strong> ${totalFlights}<br>
-<strong>Cost stairs:</strong> £${stairsCost.toFixed(2)}<br>
-<hr>
 <strong>Total final:</strong> £${totalFinal}<br>
 <strong>Estimated total time:</strong> ${totalHours}h ${totalMinutes}m
 <br><br>
@@ -226,30 +195,33 @@ document.getElementById("result").innerHTML = `
 </a>
 `;
 
-document.getElementById("quoteForm").submit();
 }
 
 if(via){
 calculateLeg(collection, via, function(d1,t1){
 calculateLeg(via, delivery, function(d2,t2){
-processCalculation(d1+d2, t1+t2);
+finish(d1+d2, t1+t2);
 });
 });
 }else{
 calculateLeg(collection, delivery, function(d,t){
-processCalculation(d,t);
+finish(d,t);
 });
 }
 
 }
 
+/* Autocomplete */
+function initAutocomplete(){
 new google.maps.places.Autocomplete(document.getElementById("collection"));
 new google.maps.places.Autocomplete(document.getElementById("via"));
 new google.maps.places.Autocomplete(document.getElementById("delivery"));
-
+}
 </script>
 
-<script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places"></script>
+<script async defer
+src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places&callback=initAutocomplete">
+</script>
 
 </body>
 </html>
