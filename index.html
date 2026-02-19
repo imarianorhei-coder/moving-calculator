@@ -7,13 +7,13 @@
 
 <style>
 body{font-family:Arial;background:#f4f6f9;margin:0}
-.container{max-width:700px;margin:40px auto;background:#fff;padding:30px;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.08)}
-h1{text-align:center}
+.container{max-width:750px;margin:40px auto;background:#fff;padding:30px;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.08)}
+h1{text-align:center;margin-bottom:20px}
 label{font-weight:bold;display:block;margin-top:15px}
 input,select,textarea{width:100%;padding:10px;margin-top:5px;border-radius:6px;border:1px solid #ccc}
 button{width:100%;padding:15px;margin-top:20px;background:#007bff;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer}
 button:hover{background:#0056b3}
-.result{margin-top:25px;padding:15px;background:#eef5ff;border-radius:8px}
+.result{margin-top:25px;padding:20px;background:#eef5ff;border-radius:8px}
 </style>
 </head>
 
@@ -51,7 +51,7 @@ button:hover{background:#0056b3}
 <label>Collection Address *</label>
 <input type="text" id="collection" required>
 
-<label>Is there any flight of stairs / no lift?</label>
+<label>Collection Stairs</label>
 <select id="stairsCollection">
 <option value="0">Ground floor / Lift</option>
 <option value="1">1 Flight</option>
@@ -63,7 +63,7 @@ button:hover{background:#0056b3}
 <label>Via Address (optional)</label>
 <input type="text" id="via">
 
-<label>Is there any flight of stairs / no lift?</label>
+<label>Via Stairs</label>
 <select id="stairsVia">
 <option value="0">Ground floor / Lift</option>
 <option value="1">1 Flight</option>
@@ -75,7 +75,7 @@ button:hover{background:#0056b3}
 <label>Delivery Address *</label>
 <input type="text" id="delivery" required>
 
-<label>Is there any flight of stairs / no lift?</label>
+<label>Delivery Stairs</label>
 <select id="stairsDelivery">
 <option value="0">Ground floor / Lift</option>
 <option value="1">1 Flight</option>
@@ -94,13 +94,22 @@ button:hover{background:#0056b3}
 <div id="result" class="result"></div>
 </div>
 
+<!-- GOOGLE MAPS -->
+<script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places" async defer></script>
+
+<!-- EMAILJS -->
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
 <script>
-(function(){
 emailjs.init("GR5ehmpI9S5BvHCGb");
-})();
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
+
+window.onload = function(){
+new google.maps.places.Autocomplete(document.getElementById('collection'));
+new google.maps.places.Autocomplete(document.getElementById('via'));
+new google.maps.places.Autocomplete(document.getElementById('delivery'));
+};
 
 document.getElementById("quoteForm").addEventListener("submit", function(e){
 e.preventDefault();
@@ -109,44 +118,65 @@ calculateQuote();
 
 function calculateQuote(){
 
-let name=document.getElementById("name").value;
-let phone=document.getElementById("phone").value;
-let email=document.getElementById("email").value;
-let hours=parseInt(document.getElementById("hours").value);
-let rate=parseFloat(document.getElementById("service").value);
+let hours = parseInt(document.getElementById("hours").value);
+if(hours < 2) hours = 2;
 
-let stairsCollection=parseInt(document.getElementById("stairsCollection").value);
-let stairsVia=parseInt(document.getElementById("stairsVia").value);
-let stairsDelivery=parseInt(document.getElementById("stairsDelivery").value);
-let stairsTotal=stairsCollection+stairsVia+stairsDelivery;
+let rate = parseFloat(document.getElementById("service").value);
 
-let collection=document.getElementById("collection").value;
-let delivery=document.getElementById("delivery").value;
+let stairsCollection = parseInt(document.getElementById("stairsCollection").value);
+let stairsVia = parseInt(document.getElementById("stairsVia").value);
+let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
+let stairsTotal = stairsCollection + stairsVia + stairsDelivery;
 
-let miles=10; 
-let costMiles=miles*1.5;
-let costHours=hours*rate;
+let collection = document.getElementById("collection").value;
+let via = document.getElementById("via").value;
+let delivery = document.getElementById("delivery").value;
 
-let costStairs=0;
-if(rate!==45){
-costStairs=stairsTotal*10;
+let service = new google.maps.DistanceMatrixService();
+
+let destinations = via ? [via, delivery] : [delivery];
+
+service.getDistanceMatrix({
+origins:[collection],
+destinations:destinations,
+travelMode: google.maps.TravelMode.DRIVING
+}, function(response,status){
+
+if(status!=="OK"){ alert("Distance calculation error"); return; }
+
+let totalMeters=0;
+let totalSeconds=0;
+
+response.rows[0].elements.forEach(el=>{
+totalMeters+=el.distance.value;
+totalSeconds+=el.duration.value;
+});
+
+let miles = totalMeters/1609.34;
+let costMiles = miles*1.5;
+let costHours = hours*rate;
+
+let costStairs = 0;
+if(rate !== 45){
+costStairs = stairsTotal*10;
 }
 
-let total=costHours+costMiles+costStairs;
+let total = costHours+costMiles+costStairs;
 
-let estimatedHours=hours;
-let estimatedMinutes=30;
+let loadingTime = 30*60;
+let stairsTime = stairsTotal*10*60;
 
-let rawDate=document.getElementById("moveDate").value;
-let d=new Date(rawDate);
-let formattedDate=
-("0"+d.getDate()).slice(-2)+"/"+
-("0"+(d.getMonth()+1)).slice(-2)+"/"+
-d.getFullYear()+" – "+
-("0"+d.getHours()).slice(-2)+":"+
-("0"+d.getMinutes()).slice(-2);
+let estimatedSeconds = totalSeconds+loadingTime+stairsTime;
 
-let breakdown=
+let reservedSeconds = hours*3600;
+if(estimatedSeconds < reservedSeconds){
+estimatedSeconds = reservedSeconds;
+}
+
+let finalHours = Math.floor(estimatedSeconds/3600);
+let finalMinutes = Math.round((estimatedSeconds%3600)/60);
+
+let breakdown =
 "Hours charged: "+hours+"\n"+
 "Cost hours: £"+costHours.toFixed(2)+"\n"+
 "Miles: "+miles.toFixed(2)+"\n"+
@@ -157,27 +187,22 @@ let breakdown=
 "Total flights: "+stairsTotal+"\n"+
 "Cost stairs: £"+costStairs.toFixed(2)+"\n"+
 "Total final: £"+total.toFixed(2)+"\n"+
-"Estimated total time: "+estimatedHours+"h "+estimatedMinutes+"m";
+"Estimated total time: "+finalHours+"h "+finalMinutes+"m";
 
-document.getElementById("result").innerHTML=
-"<b>Total final:</b> £"+total.toFixed(2)+"<br>"+
-"<b>Estimated total time:</b> "+estimatedHours+"h "+estimatedMinutes+"m";
+document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
 
 emailjs.send("service_1e9jyk9","template_0tbv6y9",{
-name:name,
-phone:phone,
-email:email,
-move_date:formattedDate,
-hours:hours,
-service:rate,
-collection:collection,
-delivery:delivery,
-collection_stairs:stairsCollection,
-via_stairs:stairsVia,
-delivery_stairs:stairsDelivery,
-quote_breakdown:breakdown,
-to_email:"info@fastanymoves.co.uk",
-reply_to:email
+name: document.getElementById("name").value,
+phone: document.getElementById("phone").value,
+email: document.getElementById("email").value,
+move_date: document.getElementById("moveDate").value,
+hours: hours,
+service: rate,
+collection: collection,
+delivery: delivery,
+quote_breakdown: breakdown
+});
+
 });
 }
 </script>
