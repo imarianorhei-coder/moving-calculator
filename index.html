@@ -6,19 +6,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {font-family: Arial; background:#f4f6f9; margin:0;}
-.container {max-width:700px; margin:40px auto; background:#fff; padding:30px; border-radius:10px; box-shadow:0 5px 20px rgba(0,0,0,0.08);}
-h1 {text-align:center;}
-label {font-weight:bold; display:block; margin-top:15px;}
-input, select, textarea {width:100%; padding:10px; margin-top:5px; border-radius:6px; border:1px solid #ccc;}
-button {width:100%; padding:15px; margin-top:20px; background:#007bff; color:#fff; border:none; border-radius:6px; font-size:16px; cursor:pointer;}
-button:hover {background:#0056b3;}
-.result {margin-top:25px; padding:15px; background:#eef5ff; border-radius:8px;}
-.whatsapp {background:#25D366; margin-top:10px;}
+body{font-family:Arial;background:#f4f6f9;margin:0}
+.container{max-width:700px;margin:40px auto;background:#fff;padding:30px;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.08)}
+h1{text-align:center}
+label{font-weight:bold;display:block;margin-top:15px}
+input,select,textarea{width:100%;padding:10px;margin-top:5px;border-radius:6px;border:1px solid #ccc}
+button{width:100%;padding:15px;margin-top:20px;background:#007bff;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer}
+button:hover{background:#0056b3}
+.whatsapp{background:#25D366}
+.result{margin-top:25px;padding:15px;background:#eef5ff;border-radius:8px}
 </style>
 </head>
 
 <body>
+
 <div class="container">
 <h1>Instant Moving Quote</h1>
 
@@ -95,17 +96,17 @@ button:hover {background:#0056b3;}
 <div id="result" class="result"></div>
 </div>
 
+<script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE_HERE&libraries=places"></script>
+
 <script>
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
-let autocompleteCollection, autocompleteVia, autocompleteDelivery;
-
-function initAutocomplete(){
-autocompleteCollection = new google.maps.places.Autocomplete(document.getElementById('collection'));
-autocompleteVia = new google.maps.places.Autocomplete(document.getElementById('via'));
-autocompleteDelivery = new google.maps.places.Autocomplete(document.getElementById('delivery'));
-}
+window.onload = function(){
+new google.maps.places.Autocomplete(document.getElementById('collection'));
+new google.maps.places.Autocomplete(document.getElementById('via'));
+new google.maps.places.Autocomplete(document.getElementById('delivery'));
+};
 
 document.getElementById("quoteForm").addEventListener("submit", function(e){
 e.preventDefault();
@@ -131,71 +132,65 @@ let service = new google.maps.DistanceMatrixService();
 let destinations = via ? [via, delivery] : [delivery];
 
 service.getDistanceMatrix({
-origins: [collection],
-destinations: destinations,
-travelMode: 'DRIVING'
-}, function(response, status){
+origins:[collection],
+destinations:destinations,
+travelMode:'DRIVING'
+},function(response,status){
 
-if(status !== "OK"){ alert("Distance error"); return; }
+if(status!=="OK"){alert("Distance error");return;}
 
-let totalMeters = 0;
-let totalSeconds = 0;
+let totalMeters=0;
+let totalSeconds=0;
 
-response.rows[0].elements.forEach(el => {
-totalMeters += el.distance.value;
-totalSeconds += el.duration.value;
+response.rows[0].elements.forEach(el=>{
+totalMeters+=el.distance.value;
+totalSeconds+=el.duration.value;
 });
 
-let miles = totalMeters / 1609.34;
-let costMiles = miles * 1.5;
+let miles=totalMeters/1609.34;
+let costMiles=miles*1.5;
+let costHours=hours*rate;
 
-let costHours = hours * rate;
-
-let costStairs = 0;
-if(rate !== 45){
-costStairs = stairsTotal * 10;
+let costStairs=0;
+if(rate!==45){
+costStairs=stairsTotal*10;
 }
 
-let total = costHours + costMiles + costStairs;
+let total=costHours+costMiles+costStairs;
 
-let loadingSeconds = 30 * 60;
-let stairsSeconds = stairsTotal * 10 * 60;
+let loadingSeconds=30*60;
+let stairsSeconds=stairsTotal*10*60;
 
-let estimatedSeconds = totalSeconds + loadingSeconds + stairsSeconds;
+let estimatedSeconds=totalSeconds+loadingSeconds+stairsSeconds;
 
-let reservedSeconds = hours * 3600;
+let reservedSeconds=hours*3600;
 
-if(estimatedSeconds < reservedSeconds){
-estimatedSeconds = reservedSeconds;
+if(estimatedSeconds<reservedSeconds){
+estimatedSeconds=reservedSeconds;
 }
 
-let finalHours = Math.floor(estimatedSeconds / 3600);
-let finalMinutes = Math.round((estimatedSeconds % 3600) / 60);
+let finalHours=Math.floor(estimatedSeconds/3600);
+let finalMinutes=Math.round((estimatedSeconds%3600)/60);
 
-document.getElementById("result").innerHTML = `
-<b>Hours charged:</b> ${hours}<br>
-<b>Cost hours:</b> £${costHours.toFixed(2)}<br>
-<b>Miles:</b> ${miles.toFixed(2)}<br>
-<b>Cost miles:</b> £${costMiles.toFixed(2)}<br>
-<b>Total flights:</b> ${stairsTotal}<br>
-<b>Cost stairs:</b> £${costStairs.toFixed(2)}<br><br>
-<b>Total final:</b> £${total.toFixed(2)}<br>
-<b>Estimated total time:</b> ${finalHours}h ${finalMinutes}m
-`;
+document.getElementById("result").innerHTML=
+"<b>Hours charged:</b> "+hours+"<br>"+
+"<b>Cost hours:</b> £"+costHours.toFixed(2)+"<br>"+
+"<b>Miles:</b> "+miles.toFixed(2)+"<br>"+
+"<b>Cost miles:</b> £"+costMiles.toFixed(2)+"<br>"+
+"<b>Total flights:</b> "+stairsTotal+"<br>"+
+"<b>Cost stairs:</b> £"+costStairs.toFixed(2)+"<br><br>"+
+"<b>Total final:</b> £"+total.toFixed(2)+"<br>"+
+"<b>Estimated total time:</b> "+finalHours+"h "+finalMinutes+"m";
 
 });
 }
 
 function sendWhatsApp(){
-let text = document.getElementById("result").innerText;
-if(!text){ alert("Please calculate first"); return; }
-window.open("https://wa.me/447846769519?text=" + encodeURIComponent(text), "_blank");
+let text=document.getElementById("result").innerText;
+if(!text){alert("Please calculate first");return;}
+window.open("https://wa.me/447846769519?text="+encodeURIComponent(text),"_blank");
 }
 
-</script>
-
-<script async
-src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE_HERE&libraries=places&callback=initAutocomplete">
 </script>
 
 </body>
