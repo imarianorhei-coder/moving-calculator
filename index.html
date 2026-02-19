@@ -9,13 +9,13 @@
 body{font-family:Arial;background:#f4f6f9;margin:0}
 .container{max-width:750px;margin:40px auto;background:#fff;padding:30px;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.08)}
 h1{text-align:center;margin-bottom:5px}
-.subtitle{text-align:center;color:#666;margin-bottom:25px}
+.subtitle{text-align:center;color:#555;margin-bottom:25px}
 label{font-weight:bold;display:block;margin-top:15px}
 input,select,textarea{width:100%;padding:10px;margin-top:5px;border-radius:6px;border:1px solid #ccc}
-button{width:100%;padding:15px;margin-top:20px;background:#007bff;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer}
-button:hover{background:#0056b3}
-.result{margin-top:25px;padding:20px;background:#eef5ff;border-radius:8px}
-.success{background:#e6ffed;padding:15px;border-radius:8px;margin-top:20px}
+button{width:100%;padding:15px;margin-top:20px;background:#0d6efd;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer}
+button:hover{background:#084298}
+.result{margin-top:25px;padding:20px;background:#eef5ff;border-left:5px solid #0d6efd;border-radius:8px}
+.success{color:green;font-weight:bold;margin-top:15px}
 </style>
 </head>
 
@@ -23,7 +23,7 @@ button:hover{background:#0056b3}
 
 <div class="container">
 <h1>Instant Moving Quote</h1>
-<div class="subtitle">Help us serve you better</div>
+<div class="subtitle">Professional Moving Services – East London</div>
 
 <form id="quoteForm">
 
@@ -92,15 +92,17 @@ button:hover{background:#0056b3}
 </form>
 
 <div id="result" class="result"></div>
-<div id="successMessage"></div>
+<div id="successMsg" class="success"></div>
 
 </div>
 
+<!-- GOOGLE MAPS -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places" async defer></script>
+
+<!-- EMAILJS -->
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 
 <script>
-
 emailjs.init("GR5ehmpI9S5BvHCGb");
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
@@ -116,14 +118,9 @@ e.preventDefault();
 calculateQuote();
 });
 
-function roundToHalfHour(hours){
-return Math.ceil(hours * 2) / 2;
-}
-
 function calculateQuote(){
 
 let rate = parseFloat(document.getElementById("service").value);
-
 let stairsCollection = parseInt(document.getElementById("stairsCollection").value);
 let stairsVia = parseInt(document.getElementById("stairsVia").value);
 let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
@@ -134,7 +131,6 @@ let via = document.getElementById("via").value;
 let delivery = document.getElementById("delivery").value;
 
 let service = new google.maps.DistanceMatrixService();
-
 let destinations = via ? [via, delivery] : [delivery];
 
 service.getDistanceMatrix({
@@ -153,59 +149,66 @@ totalMeters+=el.distance.value;
 totalSeconds+=el.duration.value;
 });
 
-let drivingHours = totalSeconds/3600;
-
-let loadingHours = 0.5;
-let unloadingHours = 0.5;
-let stairsHours = (stairsTotal * 10) / 60;
-
-let estimatedHours = drivingHours + loadingHours + unloadingHours + stairsHours;
-
-if(estimatedHours < 2) estimatedHours = 2;
-
-let chargedHours = roundToHalfHour(estimatedHours);
-
 let miles = totalMeters/1609.34;
 let costMiles = miles*1.5;
-let costHours = chargedHours*rate;
+
+let loadingSeconds = 45*60;
+let stairsSeconds = stairsTotal*10*60;
+
+let workingSeconds = totalSeconds + loadingSeconds + stairsSeconds;
+
+let hoursCalculated = Math.ceil(workingSeconds/3600);
+if(hoursCalculated < 2) hoursCalculated = 2;
+
+let costHours = hoursCalculated*rate;
 
 let costStairs = 0;
-if(rate !== 45){
-costStairs = stairsTotal*10;
-}
+if(rate !== 45){ costStairs = stairsTotal*10; }
 
 let total = costHours + costMiles + costStairs;
 
-let breakdown =
-"Estimated working time: " + estimatedHours.toFixed(2) + " hours\n" +
-"Hours charged (rounded): " + chargedHours + "\n\n" +
-"Cost hours: £" + costHours.toFixed(2) + "\n" +
-"Miles: " + miles.toFixed(2) + "\n" +
-"Cost miles: £" + costMiles.toFixed(2) + "\n" +
-"Total flights: " + stairsTotal + "\n" +
-"Cost stairs: £" + costStairs.toFixed(2) + "\n\n" +
-"TOTAL: £" + total.toFixed(2);
+let finalHours = Math.floor(workingSeconds/3600);
+let finalMinutes = Math.round((workingSeconds%3600)/60);
 
-document.getElementById("result").innerHTML =
-"<b>Final Quote</b><br><br>" +
-breakdown.replace(/\n/g,"<br>");
+let breakdown =
+"Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
+"Hours charged (rounded): "+hoursCalculated+"\n\n"+
+"Cost hours: £"+costHours.toFixed(2)+"\n"+
+"Miles: "+miles.toFixed(2)+"\n"+
+"Cost miles: £"+costMiles.toFixed(2)+"\n"+
+"Collection Stairs: "+stairsCollection+"\n"+
+"Via Stairs: "+stairsVia+"\n"+
+"Delivery Stairs: "+stairsDelivery+"\n"+
+"Total flights: "+stairsTotal+"\n"+
+"Cost stairs: £"+costStairs.toFixed(2)+"\n\n"+
+"TOTAL: £"+total.toFixed(2);
+
+document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
+
+let rawDate = document.getElementById("moveDate").value;
+let dateObj = new Date(rawDate);
+let formattedDate =
+dateObj.getDate().toString().padStart(2,'0') + "/" +
+(dateObj.getMonth()+1).toString().padStart(2,'0') + "/" +
+dateObj.getFullYear() + " – " +
+dateObj.getHours().toString().padStart(2,'0') + ":" +
+dateObj.getMinutes().toString().padStart(2,'0');
 
 emailjs.send("service_1e9jyk9","template_0tbv6y9",{
 name: document.getElementById("name").value,
 phone: document.getElementById("phone").value,
 email: document.getElementById("email").value,
-move_date: document.getElementById("moveDate").value,
+move_date: formattedDate,
 collection: collection,
 delivery: delivery,
 quote_breakdown: breakdown
+}).then(function(){
+document.getElementById("successMsg").innerHTML =
+"Quote sent successfully! Please check your email.";
 });
-
-document.getElementById("successMessage").innerHTML =
-"<div class='success'>Quote sent successfully! Please check your email.</div>";
 
 });
 }
-
 </script>
 
 </body>
