@@ -26,13 +26,13 @@ button:hover{background:#0056b3}
 <form id="quoteForm">
 
 <label>Name *</label>
-<input type="text" required>
+<input type="text" id="name" required>
 
 <label>Phone *</label>
-<input type="text" required>
+<input type="text" id="phone" required>
 
 <label>Email *</label>
-<input type="email" required>
+<input type="email" id="email" required>
 
 <label>Move Date *</label>
 <input type="datetime-local" id="moveDate" required>
@@ -86,7 +86,7 @@ button:hover{background:#0056b3}
 </select>
 
 <label>Additional Information</label>
-<textarea></textarea>
+<textarea id="info"></textarea>
 
 <button type="submit">Get My Instant Quote</button>
 <button type="button" class="whatsapp" onclick="sendWhatsApp()">Send via WhatsApp</button>
@@ -134,7 +134,6 @@ let via = document.getElementById("via").value;
 let delivery = document.getElementById("delivery").value;
 
 let service = new google.maps.DistanceMatrixService();
-
 let destinations = via ? [via, delivery] : [delivery];
 
 service.getDistanceMatrix({
@@ -168,7 +167,6 @@ let loadingSeconds=45*60;
 let stairsSeconds=stairsTotal*15*60;
 
 let estimatedSeconds=totalSeconds+loadingSeconds+stairsSeconds;
-
 let reservedSeconds=hours*3600;
 
 if(estimatedSeconds<reservedSeconds){
@@ -178,23 +176,31 @@ estimatedSeconds=reservedSeconds;
 let finalHours=Math.floor(estimatedSeconds/3600);
 let finalMinutes=Math.round((estimatedSeconds%3600)/60);
 
-document.getElementById("result").innerHTML=
-"<b>Hours charged:</b> "+hours+"<br>"+
-"<b>Cost hours:</b> £"+costHours.toFixed(2)+"<br>"+
-"<b>Miles:</b> "+miles.toFixed(2)+"<br>"+
-"<b>Cost miles:</b> £"+costMiles.toFixed(2)+"<br>"+
-"<b>Total flights:</b> "+stairsTotal+"<br>"+
-"<b>Cost stairs:</b> £"+costStairs.toFixed(2)+"<br><br>"+
+let breakdown =
+"Hours charged: "+hours+
+"\nCost hours: £"+costHours.toFixed(2)+
+"\nMiles: "+miles.toFixed(2)+
+"\nCost miles: £"+costMiles.toFixed(2)+
+"\nTotal flights: "+stairsTotal+
+"\nCost stairs: £"+costStairs.toFixed(2)+
+"\nTotal final: £"+total.toFixed(2)+
+"\nEstimated total time: "+finalHours+"h "+finalMinutes+"m";
+
+document.getElementById("result").innerHTML =
 "<b>Total final:</b> £"+total.toFixed(2)+"<br>"+
 "<b>Estimated total time:</b> "+finalHours+"h "+finalMinutes+"m";
+
+window.latestQuote = breakdown;
 
 });
 }
 
 function sendWhatsApp(){
-let text=document.getElementById("result").innerText;
-if(!text){alert("Please calculate first");return;}
-window.open("https://wa.me/447846769519?text="+encodeURIComponent(text),"_blank");
+if(!window.latestQuote){
+alert("Please calculate first");
+return;
+}
+window.open("https://wa.me/447846769519?text="+encodeURIComponent(window.latestQuote),"_blank");
 }
 
 </script>
