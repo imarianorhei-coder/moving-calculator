@@ -2,29 +2,79 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Instant Moving Quote – Fast Any Moves</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places"></script>
+<title>Instant Moving Quote</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {font-family: Arial; background:#f4f6f8; margin:0; padding:20px;}
-.container {max-width:800px; margin:auto; background:white; padding:30px; border-radius:10px; box-shadow:0 5px 20px rgba(0,0,0,0.1);}
-h1 {text-align:center;}
-input, select, textarea {width:100%; padding:10px; margin:8px 0 15px; border-radius:5px; border:1px solid #ccc;}
-button {background:#0d6efd; color:white; padding:15px; width:100%; border:none; border-radius:5px; font-size:18px; cursor:pointer;}
-button:hover {background:#084298;}
-.result {margin-top:25px; padding:15px; background:#f1f1f1; border-radius:8px;}
-label {font-weight:bold;}
+body{
+font-family:Arial;
+background:#f5f5f5;
+margin:0;
+padding:0;
+}
+
+.container{
+max-width:750px;
+margin:auto;
+background:white;
+padding:30px;
+margin-top:40px;
+border-radius:10px;
+box-shadow:0 0 15px rgba(0,0,0,0.1);
+}
+
+h1{text-align:center;}
+p{text-align:center;color:#666;}
+
+input, select, textarea{
+width:100%;
+padding:10px;
+margin:8px 0;
+border-radius:5px;
+border:1px solid #ccc;
+font-size:14px;
+}
+
+button{
+width:100%;
+padding:14px;
+background:#000;
+color:white;
+border:none;
+border-radius:6px;
+font-size:16px;
+cursor:pointer;
+margin-top:10px;
+}
+
+button:hover{background:#333;}
+
+#result{
+margin-top:20px;
+padding:15px;
+background:#f0f0f0;
+border-radius:6px;
+}
+
+label{
+font-weight:bold;
+display:block;
+margin-top:12px;
+}
 </style>
 </head>
 
 <body>
+
 <div class="container">
+
 <h1>Instant Moving Quote</h1>
 <p>Help us serve you better</p>
 
-<form id="quoteForm">
+<form id="quoteForm" action="https://formsubmit.co/imarianorhei@gmail.com" method="POST" onsubmit="return calculateQuote(event);">
+
+<input type="hidden" name="_subject" value="New Moving Quote">
+<input type="hidden" name="_captcha" value="false">
 
 <label>Name *</label>
 <input type="text" name="Name" required>
@@ -36,7 +86,7 @@ label {font-weight:bold;}
 <input type="email" name="Email" required>
 
 <label>Move Date *</label>
-<input type="datetime-local" name="Move_Date" required id="moveDate">
+<input type="datetime-local" id="moveDate" name="Move_Date" required>
 
 <label>Hours (Minimum 2) *</label>
 <input type="number" name="Hours" min="2" value="2" required>
@@ -89,23 +139,23 @@ label {font-weight:bold;}
 <label>Additional Information</label>
 <textarea name="Additional_Info"></textarea>
 
-<button type="button" onclick="calculateQuote()">Get My Instant Quote</button>
+<button type="submit">Get My Instant Quote</button>
+
+<div id="result"></div>
 
 </form>
 
-<div class="result" id="result"></div>
 </div>
 
 <script>
-const emailRecipient = "imarianorhei@gmail.com";
 
-function calculateQuote(){
+document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
-const hoursInput = parseInt(document.querySelector("[name='Hours']").value);
-const hours = Math.max(2, hoursInput);
+function calculateQuote(event){
+event.preventDefault();
 
+const hours = Math.max(2, parseInt(document.querySelector("[name='Hours']").value));
 const rate = parseFloat(document.querySelector("[name='Service']").value);
-const costHours = rate * hours;
 
 const collection = document.getElementById("collection").value;
 const via = document.getElementById("via").value;
@@ -119,57 +169,96 @@ const totalFlights = collectionStairs + viaStairs + deliveryStairs;
 
 let stairsCost = 0;
 if(rate !== 45){
-stairsCost = totalFlights * 10 * (rate / 55);
+stairsCost = totalFlights * 10;
 }
 
 const service = new google.maps.DistanceMatrixService();
 
-let origins = [collection];
-let destinations = [delivery];
-
+function calculateLeg(origin, destination, callback){
 service.getDistanceMatrix({
-origins: origins,
-destinations: destinations,
-travelMode: 'DRIVING'
-}, function(response, status){
-
+origins:[origin],
+destinations:[destination],
+travelMode:'DRIVING'
+}, function(response,status){
 if(status !== "OK"){ alert("Distance error"); return; }
-
-const element = response.rows[0].elements[0];
-const distanceMeters = element.distance.value;
-const durationSeconds = element.duration.value;
-
-const miles = (distanceMeters / 1609).toFixed(2);
-const costMiles = (miles * 1.5).toFixed(2);
-
-const loadingTime = totalFlights * 10 * 60;
-const totalTimeSeconds = durationSeconds + loadingTime;
-const totalTimeHours = Math.floor(totalTimeSeconds / 3600);
-const totalTimeMinutes = Math.floor((totalTimeSeconds % 3600) / 60);
-
-const totalFinal = (costHours + parseFloat(costMiles) + stairsCost).toFixed(2);
-
-document.getElementById("result").innerHTML = `
-<strong>Hours charged:</strong> ${hours}<br>
-<strong>Cost hours:</strong> £${costHours.toFixed(2)}<br>
-<strong>Miles:</strong> ${miles}<br>
-<strong>Cost miles:</strong> £${costMiles}<br>
-<strong>Total flights:</strong> ${totalFlights}<br>
-<strong>Cost stairs:</strong> £${stairsCost.toFixed(2)}<br>
-<hr>
-<strong>Total final:</strong> £${totalFinal}<br>
-<strong>Estimated total time:</strong> ${totalTimeHours}h ${totalTimeMinutes}m
-`;
-
+callback(
+response.rows[0].elements[0].distance.value,
+response.rows[0].elements[0].duration.value
+);
 });
 }
 
-document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
+function processCalculation(totalDistance,totalDuration){
+
+const miles = (totalDistance / 1609).toFixed(2);
+const costMiles = (miles * 1.5).toFixed(2);
+const costHours = rate * hours;
+
+const baseLoadingSeconds = 30 * 60;
+const stairsSeconds = totalFlights * 10 * 60;
+
+const realEstimatedSeconds = totalDuration + baseLoadingSeconds + stairsSeconds;
+const reservedSeconds = hours * 3600;
+
+const finalSeconds = Math.max(realEstimatedSeconds, reservedSeconds);
+
+const totalHours = Math.floor(finalSeconds / 3600);
+const totalMinutes = Math.floor((finalSeconds % 3600) / 60);
+
+const recommendedHours = Math.ceil(realEstimatedSeconds / 3600);
+const totalFinal = (costHours + parseFloat(costMiles) + stairsCost).toFixed(2);
+
+let recommendationText = "";
+
+if(realEstimatedSeconds > reservedSeconds){
+recommendationText = <br><strong style="color:#d32f2f;">Recommended booking time: ${recommendedHours} hours</strong>;
+}
+
+const whatsappMessage = `
+Fast Any Moves Ltd - Instant Quote
+
+Total: £${totalFinal}
+Estimated time: ${totalHours}h ${totalMinutes}m
+Miles: ${miles}
+Flights: ${totalFlights}
+`;
+
+const whatsappLink = https://wa.me/447846769519?text=${encodeURIComponent(whatsappMessage)};
+
+document.getElementById("result").innerHTML = `
+<strong>Total final:</strong> £${totalFinal}<br>
+<strong>Estimated total time:</strong> ${totalHours}h ${totalMinutes}m
+${recommendationText}
+<br><br>
+<a href="${whatsappLink}" target="_blank">
+<button type="button">Send Quote via WhatsApp</button>
+</a>
+`;
+
+document.getElementById("quoteForm").submit();
+}
+
+if(via){
+calculateLeg(collection, via, function(d1,t1){
+calculateLeg(via, delivery, function(d2,t2){
+processCalculation(d1+d2, t1+t2);
+});
+});
+}else{
+calculateLeg(collection, delivery, function(d,t){
+processCalculation(d,t);
+});
+}
+
+}
 
 new google.maps.places.Autocomplete(document.getElementById("collection"));
 new google.maps.places.Autocomplete(document.getElementById("via"));
 new google.maps.places.Autocomplete(document.getElementById("delivery"));
+
 </script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places"></script>
 
 </body>
 </html>
