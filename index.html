@@ -113,11 +113,16 @@ calculateQuote();
 function calculateQuote(){
 
 let rate = parseFloat(document.getElementById("service").value);
+let serviceText = document.getElementById("service").selectedOptions[0].text;
 
 let stairsCollection = parseInt(document.getElementById("stairsCollection").value);
 let stairsVia = parseInt(document.getElementById("stairsVia").value);
 let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
 let stairsTotal = stairsCollection + stairsVia + stairsDelivery;
+
+let stairsTextCollection = document.getElementById("stairsCollection").selectedOptions[0].text;
+let stairsTextVia = document.getElementById("stairsVia").selectedOptions[0].text;
+let stairsTextDelivery = document.getElementById("stairsDelivery").selectedOptions[0].text;
 
 let collection = document.getElementById("collection").value;
 let via = document.getElementById("via").value;
@@ -176,16 +181,6 @@ dateObj.getDate().toString().padStart(2,'0') + "/" +
 dateObj.getFullYear() + " – " +
 dateObj.toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'});
 
-let breakdown =
-"Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
-"Hours charged (rounded): "+roundedHours+"\n"+
-"Cost hours: £"+costHours.toFixed(2)+"\n"+
-"Miles: "+miles.toFixed(2)+"\n"+
-"Cost miles: £"+costMiles.toFixed(2)+"\n"+
-"Total flights: "+stairsTotal+"\n"+
-"Cost stairs: £"+costStairs.toFixed(2)+"\n"+
-"TOTAL: £"+total.toFixed(2);
-
 document.getElementById("result").innerHTML =
 "<b>Estimated working time:</b> "+finalHours+"h "+finalMinutes+"m<br>"+
 "<b>Hours charged:</b> "+roundedHours+"<br><br>"+
@@ -197,13 +192,37 @@ document.getElementById("result").innerHTML =
 "<b style='font-size:18px'>TOTAL: £"+total.toFixed(2)+"</b>";
 
 let whatsappMessage =
-"🚚 New Moving Quote\n\n"+
+"🚚 Instant Moving Quote\n"+
+"Help us serve you better\n\n"+
+
 "Name: "+document.getElementById("name").value+"\n"+
 "Phone: "+document.getElementById("phone").value+"\n"+
-"Move Date: "+formattedDate+"\n"+
-"Collection: "+collection+"\n"+
-"Delivery: "+delivery+"\n\n"+
-breakdown;
+"Email: "+document.getElementById("email").value+"\n"+
+"Move Date: "+formattedDate+"\n\n"+
+
+"Service: "+serviceText+"\n\n"+
+
+"Collection Address: "+collection+"\n"+
+"Collection Stairs: "+stairsTextCollection+"\n\n"+
+
+"Via Address: "+(via ? via : "N/A")+"\n"+
+"Via Stairs: "+stairsTextVia+"\n\n"+
+
+"Delivery Address: "+delivery+"\n"+
+"Delivery Stairs: "+stairsTextDelivery+"\n\n"+
+
+"---------------------------------\n\n"+
+
+"Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
+"Hours charged: "+roundedHours+"\n\n"+
+
+"Cost hours: £"+costHours.toFixed(2)+"\n"+
+"Miles: "+miles.toFixed(2)+"\n"+
+"Cost miles: £"+costMiles.toFixed(2)+"\n"+
+"Total flights: "+stairsTotal+"\n"+
+"Cost stairs: £"+costStairs.toFixed(2)+"\n\n"+
+
+"TOTAL: £"+total.toFixed(2);
 
 let whatsappURL = "https://wa.me/447846769519?text=" + encodeURIComponent(whatsappMessage);
 
