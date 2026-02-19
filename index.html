@@ -222,7 +222,7 @@ Cost miles: £${costMiles.toFixed(2)}
 Total flights: ${totalFlights}
 Cost stairs: £${costStairs.toFixed(2)}
 Total final: £${totalFinal.toFixed(2)}
-Estimated total time: ${h}h ${m}m
+Estimated total time: ${h}h ${m}m}
 `;
 
 document.getElementById("quoteData").value = breakdown;
@@ -230,7 +230,7 @@ document.getElementById("quoteData").value = breakdown;
 document.getElementById("result").style.display = "block";
 document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
 
-setTimeout(()=> e.target.submit(), 1000);
+setTimeout(()=> e.target.submit(), 1200);
 
 });
 
