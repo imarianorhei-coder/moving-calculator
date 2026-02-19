@@ -2,101 +2,59 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Instant Moving Quote – Fast Any Moves Ltd</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instant Moving Quote – Fast Any Moves</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places"></script>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background:#f4f6f9;
-  padding:20px;
-}
-
-.container {
-  max-width:700px;
-  margin:auto;
-  background:white;
-  padding:30px;
-  border-radius:12px;
-  box-shadow:0 5px 25px rgba(0,0,0,0.08);
-}
-
-h1 {
-  text-align:center;
-  margin-bottom:5px;
-}
-
-.sub {
-  text-align:center;
-  color:#666;
-  margin-bottom:25px;
-}
-
-input, select, textarea {
-  width:100%;
-  padding:10px;
-  margin-bottom:15px;
-  border-radius:6px;
-  border:1px solid #ccc;
-  font-size:14px;
-}
-
-button {
-  width:100%;
-  padding:14px;
-  background:#1e73be;
-  color:white;
-  border:none;
-  border-radius:6px;
-  font-size:16px;
-  cursor:pointer;
-}
-
-button:hover {
-  background:#155d9c;
-}
-
-#result {
-  margin-top:25px;
-  background:#eef5ff;
-  padding:15px;
-  border-radius:8px;
-  display:none;
-}
+body {font-family: Arial; background:#f4f6f8; margin:0; padding:20px;}
+.container {max-width:800px; margin:auto; background:white; padding:30px; border-radius:10px; box-shadow:0 5px 20px rgba(0,0,0,0.1);}
+h1 {text-align:center;}
+input, select, textarea {width:100%; padding:10px; margin:8px 0 15px; border-radius:5px; border:1px solid #ccc;}
+button {background:#0d6efd; color:white; padding:15px; width:100%; border:none; border-radius:5px; font-size:18px; cursor:pointer;}
+button:hover {background:#084298;}
+.result {margin-top:25px; padding:15px; background:#f1f1f1; border-radius:8px;}
+label {font-weight:bold;}
 </style>
 </head>
 
 <body>
-
 <div class="container">
-
 <h1>Instant Moving Quote</h1>
-<p class="sub">Help us serve you better</p>
+<p>Help us serve you better</p>
 
-<form id="quoteForm" action="https://formsubmit.co/imarianorhei@gmail.com" method="POST">
+<form id="quoteForm">
 
-<input type="hidden" name="_subject" value="New Instant Quote - Fast Any Moves">
-<input type="hidden" name="_captcha" value="false">
+<label>Name *</label>
+<input type="text" name="Name" required>
 
-<input type="text" name="Name" placeholder="Name *" required>
-<input type="tel" name="Phone" placeholder="Phone *" required>
-<input type="email" name="Email" placeholder="Email *" required>
+<label>Phone *</label>
+<input type="text" name="Phone" required>
 
-<input type="datetime-local" name="Move_Date" required>
+<label>Email *</label>
+<input type="email" name="Email" required>
 
-<input type="number" name="Hours" min="2" value="2" required placeholder="Hours (Minimum 2) *">
+<label>Move Date *</label>
+<input type="datetime-local" name="Move_Date" required id="moveDate">
 
+<label>Hours (Minimum 2) *</label>
+<input type="number" name="Hours" min="2" value="2" required>
+
+<label>Do you need help with loading and unloading? *</label>
 <select name="Service" required>
-<option value="">Help Required *</option>
+<option value="">Select</option>
 <option value="45">No help required</option>
 <option value="55">1 Man</option>
 <option value="70">2 Men</option>
 <option value="90">3 Men</option>
 </select>
 
-<input id="collection" type="text" name="Collection_Address" placeholder="Collection Address *" required>
+<label>Collection Address *</label>
+<input type="text" id="collection" required>
 
-<select name="Collection_Stairs">
+<label>Is there any flight of stairs / no lift?</label>
+<select id="collectionStairs">
 <option value="0">Ground floor / Lift</option>
 <option value="1">1 Flight</option>
 <option value="2">2 Flights</option>
@@ -104,9 +62,11 @@ button:hover {
 <option value="4">4 Flights</option>
 </select>
 
-<input id="via" type="text" name="Via_Address" placeholder="Via Address (optional)">
+<label>Via Address (optional)</label>
+<input type="text" id="via">
 
-<select name="Via_Stairs">
+<label>Is there any flight of stairs / no lift?</label>
+<select id="viaStairs">
 <option value="0">Ground floor / Lift</option>
 <option value="1">1 Flight</option>
 <option value="2">2 Flights</option>
@@ -114,9 +74,11 @@ button:hover {
 <option value="4">4 Flights</option>
 </select>
 
-<input id="delivery" type="text" name="Delivery_Address" placeholder="Delivery Address *" required>
+<label>Delivery Address *</label>
+<input type="text" id="delivery" required>
 
-<select name="Delivery_Stairs">
+<label>Is there any flight of stairs / no lift?</label>
+<select id="deliveryStairs">
 <option value="0">Ground floor / Lift</option>
 <option value="1">1 Flight</option>
 <option value="2">2 Flights</option>
@@ -124,117 +86,89 @@ button:hover {
 <option value="4">4 Flights</option>
 </select>
 
-<textarea name="Additional_Info" placeholder="Additional Information"></textarea>
+<label>Additional Information</label>
+<textarea name="Additional_Info"></textarea>
 
-<input type="hidden" name="Quote_Breakdown" id="quoteData">
-
-<button type="submit">Get My Instant Quote</button>
+<button type="button" onclick="calculateQuote()">Get My Instant Quote</button>
 
 </form>
 
-<div id="result"></div>
-
+<div class="result" id="result"></div>
 </div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places"></script>
-
 <script>
+const emailRecipient = "imarianorhei@gmail.com";
 
-// Prevent past dates
-document.querySelector('input[name="Move_Date"]').min = new Date().toISOString().slice(0,16);
+function calculateQuote(){
 
-new google.maps.places.Autocomplete(document.getElementById('collection'));
-new google.maps.places.Autocomplete(document.getElementById('via'));
-new google.maps.places.Autocomplete(document.getElementById('delivery'));
+const hoursInput = parseInt(document.querySelector("[name='Hours']").value);
+const hours = Math.max(2, hoursInput);
 
-document.getElementById("quoteForm").addEventListener("submit", function(e){
+const rate = parseFloat(document.querySelector("[name='Service']").value);
+const costHours = rate * hours;
 
-e.preventDefault();
+const collection = document.getElementById("collection").value;
+const via = document.getElementById("via").value;
+const delivery = document.getElementById("delivery").value;
 
-let hours = parseInt(document.querySelector('[name="Hours"]').value);
-let rate = parseFloat(document.querySelector('[name="Service"]').value);
-let collection = document.getElementById("collection").value;
-let via = document.getElementById("via").value;
-let delivery = document.getElementById("delivery").value;
+const collectionStairs = parseInt(document.getElementById("collectionStairs").value);
+const viaStairs = parseInt(document.getElementById("viaStairs").value);
+const deliveryStairs = parseInt(document.getElementById("deliveryStairs").value);
 
-let collectionStairs = parseInt(document.querySelector('[name="Collection_Stairs"]').value);
-let viaStairs = parseInt(document.querySelector('[name="Via_Stairs"]').value);
-let deliveryStairs = parseInt(document.querySelector('[name="Delivery_Stairs"]').value);
+const totalFlights = collectionStairs + viaStairs + deliveryStairs;
 
-let distanceService = new google.maps.DistanceMatrixService();
-
-let stops = via ? [collection, via, delivery] : [collection, delivery];
-
-distanceService.getDistanceMatrix({
-origins: stops.slice(0, -1),
-destinations: stops.slice(1),
-travelMode: 'DRIVING',
-}, function(response, status){
-
-if (status !== "OK") return;
-
-let driveSeconds = 0;
-let distanceMeters = 0;
-
-response.rows.forEach(row=>{
-row.elements.forEach(el=>{
-driveSeconds += el.duration.value;
-distanceMeters += el.distance.value;
-});
-});
-
-let miles = distanceMeters / 1609;
-let costMiles = miles * 1.5;
-let costHours = rate * hours;
-
-let totalFlights = collectionStairs + viaStairs + deliveryStairs;
-let costStairs = 0;
-
+let stairsCost = 0;
 if(rate !== 45){
-costStairs = totalFlights * 10;
+stairsCost = totalFlights * 10 * (rate / 55);
 }
 
-let loadingMinutes = 0;
+const service = new google.maps.DistanceMatrixService();
 
-if(rate === 45) loadingMinutes = 30;
-if(rate === 55) loadingMinutes = 90;
-if(rate === 70) loadingMinutes = 70;
-if(rate === 90) loadingMinutes = 60;
+let origins = [collection];
+let destinations = [delivery];
 
-let stairsMinutes = totalFlights * 10;
-let driveMinutes = driveSeconds / 60;
+service.getDistanceMatrix({
+origins: origins,
+destinations: destinations,
+travelMode: 'DRIVING'
+}, function(response, status){
 
-let estimatedMinutes = loadingMinutes + stairsMinutes + driveMinutes;
-let bookedMinutes = hours * 60;
+if(status !== "OK"){ alert("Distance error"); return; }
 
-let totalMinutes = Math.max(estimatedMinutes, bookedMinutes);
+const element = response.rows[0].elements[0];
+const distanceMeters = element.distance.value;
+const durationSeconds = element.duration.value;
 
-let totalFinal = costHours + costMiles + costStairs;
+const miles = (distanceMeters / 1609).toFixed(2);
+const costMiles = (miles * 1.5).toFixed(2);
 
-let h = Math.floor(totalMinutes / 60);
-let m = Math.round(totalMinutes % 60);
+const loadingTime = totalFlights * 10 * 60;
+const totalTimeSeconds = durationSeconds + loadingTime;
+const totalTimeHours = Math.floor(totalTimeSeconds / 3600);
+const totalTimeMinutes = Math.floor((totalTimeSeconds % 3600) / 60);
 
-let breakdown = `
-Hours charged: ${hours}
-Cost hours: £${costHours.toFixed(2)}
-Miles: ${miles.toFixed(2)}
-Cost miles: £${costMiles.toFixed(2)}
-Total flights: ${totalFlights}
-Cost stairs: £${costStairs.toFixed(2)}
-Total final: £${totalFinal.toFixed(2)}
-Estimated total time: ${h}h ${m}m}
+const totalFinal = (costHours + parseFloat(costMiles) + stairsCost).toFixed(2);
+
+document.getElementById("result").innerHTML = `
+<strong>Hours charged:</strong> ${hours}<br>
+<strong>Cost hours:</strong> £${costHours.toFixed(2)}<br>
+<strong>Miles:</strong> ${miles}<br>
+<strong>Cost miles:</strong> £${costMiles}<br>
+<strong>Total flights:</strong> ${totalFlights}<br>
+<strong>Cost stairs:</strong> £${stairsCost.toFixed(2)}<br>
+<hr>
+<strong>Total final:</strong> £${totalFinal}<br>
+<strong>Estimated total time:</strong> ${totalTimeHours}h ${totalTimeMinutes}m
 `;
 
-document.getElementById("quoteData").value = breakdown;
-
-document.getElementById("result").style.display = "block";
-document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
-
-setTimeout(()=> e.target.submit(), 1200);
-
 });
+}
 
-});
+document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
+
+new google.maps.places.Autocomplete(document.getElementById("collection"));
+new google.maps.places.Autocomplete(document.getElementById("via"));
+new google.maps.places.Autocomplete(document.getElementById("delivery"));
 </script>
 
 </body>
