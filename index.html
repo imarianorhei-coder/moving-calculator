@@ -13,7 +13,6 @@ label{font-weight:bold;display:block;margin-top:15px}
 input,select,textarea{width:100%;padding:10px;margin-top:5px;border-radius:6px;border:1px solid #ccc}
 button{width:100%;padding:15px;margin-top:20px;background:#007bff;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer}
 button:hover{background:#0056b3}
-.whatsapp{background:#25D366}
 .result{margin-top:25px;padding:15px;background:#eef5ff;border-radius:8px}
 </style>
 </head>
@@ -23,25 +22,31 @@ button:hover{background:#0056b3}
 <div class="container">
 <h1>Instant Moving Quote</h1>
 
-<form id="quoteForm">
+<form id="quoteForm"
+action="https://formsubmit.co/imarianorhei@gmail.com"
+method="POST">
+
+<input type="hidden" name="_subject" value="New Moving Quote Request">
+<input type="hidden" name="_template" value="box">
+<input type="hidden" name="_autoresponse" value="Thank you for your request. We will contact you shortly.">
 
 <label>Name *</label>
-<input type="text" id="name" required>
+<input type="text" name="Name" required>
 
 <label>Phone *</label>
-<input type="text" id="phone" required>
+<input type="text" name="Phone" required>
 
 <label>Email *</label>
-<input type="email" id="email" required>
+<input type="email" name="Email" required>
 
 <label>Move Date *</label>
-<input type="datetime-local" id="moveDate" required>
+<input type="datetime-local" id="moveDate" name="Move Date" required>
 
 <label>Hours (Minimum 2) *</label>
-<input type="number" id="hours" min="2" value="2" required>
+<input type="number" id="hours" name="Hours" min="2" value="2" required>
 
 <label>Do you need help with loading and unloading? *</label>
-<select id="service" required>
+<select id="service" name="Service" required>
 <option value="">Select</option>
 <option value="45">No help required</option>
 <option value="55">1 Man</option>
@@ -50,7 +55,7 @@ button:hover{background:#0056b3}
 </select>
 
 <label>Collection Address *</label>
-<input type="text" id="collection" required>
+<input type="text" id="collection" name="Collection Address" required>
 
 <label>Is there any flight of stairs / no lift?</label>
 <select id="stairsCollection">
@@ -62,7 +67,7 @@ button:hover{background:#0056b3}
 </select>
 
 <label>Via Address (optional)</label>
-<input type="text" id="via">
+<input type="text" id="via" name="Via Address">
 
 <label>Is there any flight of stairs / no lift?</label>
 <select id="stairsVia">
@@ -74,7 +79,7 @@ button:hover{background:#0056b3}
 </select>
 
 <label>Delivery Address *</label>
-<input type="text" id="delivery" required>
+<input type="text" id="delivery" name="Delivery Address" required>
 
 <label>Is there any flight of stairs / no lift?</label>
 <select id="stairsDelivery">
@@ -86,10 +91,11 @@ button:hover{background:#0056b3}
 </select>
 
 <label>Additional Information</label>
-<textarea id="info"></textarea>
+<textarea name="Additional Info"></textarea>
+
+<input type="hidden" id="quoteBreakdown" name="Quote Breakdown">
 
 <button type="submit">Get My Instant Quote</button>
-<button type="button" class="whatsapp" onclick="sendWhatsApp()">Send via WhatsApp</button>
 
 </form>
 
@@ -114,14 +120,13 @@ new google.maps.places.Autocomplete(document.getElementById('delivery'));
 
 document.getElementById("quoteForm").addEventListener("submit", function(e){
 e.preventDefault();
-calculateQuote();
+calculateQuote(true);
 });
 
-function calculateQuote(){
+function calculateQuote(sendEmail=false){
 
 let hours = Math.max(2, parseInt(document.getElementById("hours").value));
 let rate = parseFloat(document.getElementById("service").value);
-
 if(!rate){ alert("Please select service"); return; }
 
 let stairsTotal =
@@ -165,7 +170,6 @@ let total=costHours+costMiles+costStairs;
 
 let loadingSeconds=45*60;
 let stairsSeconds=stairsTotal*15*60;
-
 let estimatedSeconds=totalSeconds+loadingSeconds+stairsSeconds;
 let reservedSeconds=hours*3600;
 
@@ -187,20 +191,22 @@ let breakdown =
 "\nEstimated total time: "+finalHours+"h "+finalMinutes+"m";
 
 document.getElementById("result").innerHTML =
+"<b>Hours charged:</b> "+hours+"<br>"+
+"<b>Cost hours:</b> £"+costHours.toFixed(2)+"<br>"+
+"<b>Miles:</b> "+miles.toFixed(2)+"<br>"+
+"<b>Cost miles:</b> £"+costMiles.toFixed(2)+"<br>"+
+"<b>Total flights:</b> "+stairsTotal+"<br>"+
+"<b>Cost stairs:</b> £"+costStairs.toFixed(2)+"<br><br>"+
 "<b>Total final:</b> £"+total.toFixed(2)+"<br>"+
 "<b>Estimated total time:</b> "+finalHours+"h "+finalMinutes+"m";
 
-window.latestQuote = breakdown;
+document.getElementById("quoteBreakdown").value = breakdown;
+
+if(sendEmail){
+document.getElementById("quoteForm").submit();
+}
 
 });
-}
-
-function sendWhatsApp(){
-if(!window.latestQuote){
-alert("Please calculate first");
-return;
-}
-window.open("https://wa.me/447846769519?text="+encodeURIComponent(window.latestQuote),"_blank");
 }
 
 </script>
