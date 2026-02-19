@@ -5,15 +5,6 @@
 <title>Instant Moving Quote</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-<script>
-(function(){
-emailjs.init("GR5ehmpI9S5BvHCGb");
-})();
-</script>
-
-<script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places"></script>
-
 <style>
 body{font-family:Arial;background:#f4f6f9;margin:0}
 .container{max-width:700px;margin:40px auto;background:#fff;padding:30px;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.08)}
@@ -103,15 +94,13 @@ button:hover{background:#0056b3}
 <div id="result" class="result"></div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
+(function(){
+emailjs.init("GR5ehmpI9S5BvHCGb");
+})();
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
-
-window.onload = function(){
-new google.maps.places.Autocomplete(document.getElementById('collection'));
-new google.maps.places.Autocomplete(document.getElementById('via'));
-new google.maps.places.Autocomplete(document.getElementById('delivery'));
-};
 
 document.getElementById("quoteForm").addEventListener("submit", function(e){
 e.preventDefault();
@@ -120,60 +109,44 @@ calculateQuote();
 
 function calculateQuote(){
 
-let hours = parseInt(document.getElementById("hours").value);
-let rate = parseFloat(document.getElementById("service").value);
+let name=document.getElementById("name").value;
+let phone=document.getElementById("phone").value;
+let email=document.getElementById("email").value;
+let hours=parseInt(document.getElementById("hours").value);
+let rate=parseFloat(document.getElementById("service").value);
 
-let stairsCollection = parseInt(document.getElementById("stairsCollection").value);
-let stairsVia = parseInt(document.getElementById("stairsVia").value);
-let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
+let stairsCollection=parseInt(document.getElementById("stairsCollection").value);
+let stairsVia=parseInt(document.getElementById("stairsVia").value);
+let stairsDelivery=parseInt(document.getElementById("stairsDelivery").value);
+let stairsTotal=stairsCollection+stairsVia+stairsDelivery;
 
-let stairsTotal = stairsCollection + stairsVia + stairsDelivery;
+let collection=document.getElementById("collection").value;
+let delivery=document.getElementById("delivery").value;
 
-let collection = document.getElementById("collection").value;
-let via = document.getElementById("via").value;
-let delivery = document.getElementById("delivery").value;
-
-let service = new google.maps.DistanceMatrixService();
-let destinations = via ? [via, delivery] : [delivery];
-
-service.getDistanceMatrix({
-origins:[collection],
-destinations:destinations,
-travelMode:'DRIVING'
-},function(response,status){
-
-if(status!=="OK"){alert("Distance error");return;}
-
-let totalMeters=0;
-let totalSeconds=0;
-
-response.rows[0].elements.forEach(el=>{
-totalMeters+=el.distance.value;
-totalSeconds+=el.duration.value;
-});
-
-let miles=totalMeters/1609.34;
+let miles=10; 
 let costMiles=miles*1.5;
 let costHours=hours*rate;
-let costStairs = (rate!==45) ? stairsTotal*10 : 0;
+
+let costStairs=0;
+if(rate!==45){
+costStairs=stairsTotal*10;
+}
 
 let total=costHours+costMiles+costStairs;
 
-let loadingSeconds=30*60;
-let stairsSeconds=stairsTotal*10*60;
+let estimatedHours=hours;
+let estimatedMinutes=30;
 
-let estimatedSeconds=totalSeconds+loadingSeconds+stairsSeconds;
+let rawDate=document.getElementById("moveDate").value;
+let d=new Date(rawDate);
+let formattedDate=
+("0"+d.getDate()).slice(-2)+"/"+
+("0"+(d.getMonth()+1)).slice(-2)+"/"+
+d.getFullYear()+" – "+
+("0"+d.getHours()).slice(-2)+":"+
+("0"+d.getMinutes()).slice(-2);
 
-let reservedSeconds=hours*3600;
-
-if(estimatedSeconds<reservedSeconds){
-estimatedSeconds=reservedSeconds;
-}
-
-let finalHours=Math.floor(estimatedSeconds/3600);
-let finalMinutes=Math.round((estimatedSeconds%3600)/60);
-
-let breakdown =
+let breakdown=
 "Hours charged: "+hours+"\n"+
 "Cost hours: £"+costHours.toFixed(2)+"\n"+
 "Miles: "+miles.toFixed(2)+"\n"+
@@ -184,30 +157,29 @@ let breakdown =
 "Total flights: "+stairsTotal+"\n"+
 "Cost stairs: £"+costStairs.toFixed(2)+"\n"+
 "Total final: £"+total.toFixed(2)+"\n"+
-"Estimated total time: "+finalHours+"h "+finalMinutes+"m";
+"Estimated total time: "+estimatedHours+"h "+estimatedMinutes+"m";
 
-document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
+document.getElementById("result").innerHTML=
+"<b>Total final:</b> £"+total.toFixed(2)+"<br>"+
+"<b>Estimated total time:</b> "+estimatedHours+"h "+estimatedMinutes+"m";
 
 emailjs.send("service_1e9jyk9","template_0tbv6y9",{
-name:document.getElementById("name").value,
-phone:document.getElementById("phone").value,
-email:document.getElementById("email").value,
-move_date:document.getElementById("moveDate").value,
+name:name,
+phone:phone,
+email:email,
+move_date:formattedDate,
 hours:hours,
 service:rate,
 collection:collection,
-via:via,
 delivery:delivery,
-quote_breakdown:breakdown
-}).then(function(){
-alert("Quote sent successfully!");
-},function(error){
-alert("Email error. Check EmailJS settings.");
-});
-
+collection_stairs:stairsCollection,
+via_stairs:stairsVia,
+delivery_stairs:stairsDelivery,
+quote_breakdown:breakdown,
+to_email:"info@fastanymoves.co.uk",
+reply_to:email
 });
 }
-
 </script>
 
 </body>
