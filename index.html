@@ -96,16 +96,20 @@ button:hover{background:#0056b3}
 <div id="result" class="result"></div>
 </div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE_HERE&libraries=places"></script>
+<script async
+src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places">
+</script>
 
 <script>
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
 window.onload = function(){
+if(typeof google !== "undefined"){
 new google.maps.places.Autocomplete(document.getElementById('collection'));
 new google.maps.places.Autocomplete(document.getElementById('via'));
 new google.maps.places.Autocomplete(document.getElementById('delivery'));
+}
 };
 
 document.getElementById("quoteForm").addEventListener("submit", function(e){
@@ -115,8 +119,10 @@ calculateQuote();
 
 function calculateQuote(){
 
-let hours = parseInt(document.getElementById("hours").value);
+let hours = Math.max(2, parseInt(document.getElementById("hours").value));
 let rate = parseFloat(document.getElementById("service").value);
+
+if(!rate){ alert("Please select service"); return; }
 
 let stairsTotal =
 parseInt(document.getElementById("stairsCollection").value) +
@@ -158,8 +164,8 @@ costStairs=stairsTotal*10;
 
 let total=costHours+costMiles+costStairs;
 
-let loadingSeconds=30*60;
-let stairsSeconds=stairsTotal*10*60;
+let loadingSeconds=45*60;
+let stairsSeconds=stairsTotal*15*60;
 
 let estimatedSeconds=totalSeconds+loadingSeconds+stairsSeconds;
 
