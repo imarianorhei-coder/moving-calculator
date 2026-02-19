@@ -12,7 +12,6 @@ background:#f5f5f5;
 margin:0;
 padding:0;
 }
-
 .container{
 max-width:750px;
 margin:auto;
@@ -22,10 +21,8 @@ margin-top:40px;
 border-radius:10px;
 box-shadow:0 0 15px rgba(0,0,0,0.1);
 }
-
 h1{text-align:center;}
 p{text-align:center;color:#666;}
-
 input, select, textarea{
 width:100%;
 padding:10px;
@@ -34,7 +31,6 @@ border-radius:5px;
 border:1px solid #ccc;
 font-size:14px;
 }
-
 button{
 width:100%;
 padding:14px;
@@ -46,16 +42,13 @@ font-size:16px;
 cursor:pointer;
 margin-top:10px;
 }
-
 button:hover{background:#333;}
-
 #result{
 margin-top:20px;
 padding:15px;
 background:#f0f0f0;
 border-radius:6px;
 }
-
 label{
 font-weight:bold;
 display:block;
@@ -167,6 +160,7 @@ const deliveryStairs = parseInt(document.getElementById("deliveryStairs").value)
 
 const totalFlights = collectionStairs + viaStairs + deliveryStairs;
 
+/* COST calculation */
 let stairsCost = 0;
 if(rate !== 45){
 stairsCost = totalFlights * 10;
@@ -194,25 +188,16 @@ const miles = (totalDistance / 1609).toFixed(2);
 const costMiles = (miles * 1.5).toFixed(2);
 const costHours = rate * hours;
 
-const baseLoadingSeconds = 30 * 60;
+/* TIME calculation (independent of booked hours) */
+const loadingSeconds = 30 * 60;
 const stairsSeconds = totalFlights * 10 * 60;
 
-const realEstimatedSeconds = totalDuration + baseLoadingSeconds + stairsSeconds;
-const reservedSeconds = hours * 3600;
-
-const finalSeconds = Math.max(realEstimatedSeconds, reservedSeconds);
+const finalSeconds = totalDuration + loadingSeconds + stairsSeconds;
 
 const totalHours = Math.floor(finalSeconds / 3600);
 const totalMinutes = Math.floor((finalSeconds % 3600) / 60);
 
-const recommendedHours = Math.ceil(realEstimatedSeconds / 3600);
 const totalFinal = (costHours + parseFloat(costMiles) + stairsCost).toFixed(2);
-
-let recommendationText = "";
-
-if(realEstimatedSeconds > reservedSeconds){
-recommendationText = <br><strong style="color:#d32f2f;">Recommended booking time: ${recommendedHours} hours</strong>;
-}
 
 const whatsappMessage = `
 Fast Any Moves Ltd - Instant Quote
@@ -226,9 +211,15 @@ Flights: ${totalFlights}
 const whatsappLink = https://wa.me/447846769519?text=${encodeURIComponent(whatsappMessage)};
 
 document.getElementById("result").innerHTML = `
+<strong>Hours charged:</strong> ${hours}<br>
+<strong>Cost hours:</strong> £${costHours.toFixed(2)}<br>
+<strong>Miles:</strong> ${miles}<br>
+<strong>Cost miles:</strong> £${costMiles}<br>
+<strong>Total flights:</strong> ${totalFlights}<br>
+<strong>Cost stairs:</strong> £${stairsCost.toFixed(2)}<br>
+<hr>
 <strong>Total final:</strong> £${totalFinal}<br>
 <strong>Estimated total time:</strong> ${totalHours}h ${totalMinutes}m
-${recommendationText}
 <br><br>
 <a href="${whatsappLink}" target="_blank">
 <button type="button">Send Quote via WhatsApp</button>
