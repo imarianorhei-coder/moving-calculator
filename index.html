@@ -2,20 +2,20 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Instant Moving Quote</title>
+<title>Fast Any Moves – Instant Moving Quote</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{font-family:Arial;background:#f4f6f9;margin:0}
-.container{max-width:750px;margin:40px auto;background:#fff;padding:35px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.08)}
-h1{text-align:center;color:#0d47a1;margin-bottom:5px}
+body{font-family:Arial;background:#f4f7fb;margin:0}
+.container{max-width:750px;margin:40px auto;background:#fff;padding:35px;border-radius:12px;box-shadow:0 8px 25px rgba(0,0,0,0.08)}
+h1{text-align:center;margin-bottom:5px;color:#0d2c54}
 .subtitle{text-align:center;color:#555;margin-bottom:25px}
 label{font-weight:bold;display:block;margin-top:15px}
-input,select,textarea{width:100%;padding:10px;margin-top:5px;border-radius:6px;border:1px solid #ccc}
-button{width:100%;padding:15px;margin-top:25px;background:#0d47a1;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer}
-button:hover{background:#08306b}
-.result{margin-top:30px;padding:20px;background:#eef5ff;border-radius:8px;line-height:1.6}
-.success{color:green;font-weight:bold;margin-top:15px}
+input,select,textarea{width:100%;padding:12px;margin-top:5px;border-radius:6px;border:1px solid #ccc;font-size:14px}
+button{width:100%;padding:15px;margin-top:25px;background:#0d2c54;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer}
+button:hover{background:#154b8a}
+.result{margin-top:30px;padding:20px;background:#eef4ff;border-radius:8px}
+.success{color:green;font-weight:bold;margin-top:10px}
 </style>
 </head>
 
@@ -23,7 +23,7 @@ button:hover{background:#08306b}
 
 <div class="container">
 <h1>Instant Moving Quote</h1>
-<p class="subtitle">Help us serve you better</p>
+<p class="subtitle">Professional removals across London & UK</p>
 
 <form id="quoteForm">
 
@@ -92,14 +92,13 @@ button:hover{background:#08306b}
 </form>
 
 <div id="result" class="result"></div>
-<div id="successMsg" class="success"></div>
-
 </div>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places"></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 
 <script>
+
 emailjs.init("GR5ehmpI9S5BvHCGb");
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
@@ -118,6 +117,7 @@ calculateQuote();
 function calculateQuote(){
 
 let rate = parseFloat(document.getElementById("service").value);
+
 let stairsCollection = parseInt(document.getElementById("stairsCollection").value);
 let stairsVia = parseInt(document.getElementById("stairsVia").value);
 let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
@@ -133,7 +133,7 @@ let destinations = via ? [via, delivery] : [delivery];
 service.getDistanceMatrix({
 origins:[collection],
 destinations:destinations,
-travelMode:'DRIVING'
+travelMode: google.maps.TravelMode.DRIVING
 }, function(response,status){
 
 if(status!=="OK"){ alert("Distance calculation error"); return; }
@@ -149,31 +149,40 @@ totalSeconds+=el.duration.value;
 let miles = totalMeters/1609.34;
 let costMiles = miles*1.5;
 
-let loadingTime = 30*60;
+let loadingTime = 45*60;
 let stairsTime = stairsTotal*10*60;
 
-let estimatedSeconds = totalSeconds + loadingTime + stairsTime;
+let estimatedSeconds = totalSeconds+loadingTime+stairsTime;
 
 let estimatedHours = estimatedSeconds/3600;
-let hoursRounded = Math.ceil(estimatedHours);
+let roundedHours = Math.ceil(estimatedHours);
+if(roundedHours < 2) roundedHours = 2;
 
-let finalMinutes = Math.round((estimatedSeconds%3600)/60);
-let finalHours = Math.floor(estimatedSeconds/3600);
+let costHours = roundedHours*rate;
 
-if(finalMinutes === 60){
-finalHours +=1;
-finalMinutes = 0;
+let costStairs = 0;
+if(rate !== 45){
+costStairs = stairsTotal*10;
 }
 
-let costHours = hoursRounded * rate;
+let total = costHours+costMiles+costStairs;
 
-let costStairs = (rate !== 45) ? stairsTotal*10 : 0;
+let finalHours = Math.floor(estimatedSeconds/3600);
+let finalMinutes = Math.round((estimatedSeconds%3600)/60);
+if(finalMinutes == 60){ finalHours++; finalMinutes=0; }
 
-let total = costHours + costMiles + costStairs;
+let rawDate = document.getElementById("moveDate").value;
+let dateObj = new Date(rawDate);
+
+let formattedDate =
+dateObj.getDate().toString().padStart(2,'0') + "/" +
+(dateObj.getMonth()+1).toString().padStart(2,'0') + "/" +
+dateObj.getFullYear() + " – " +
+dateObj.toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'});
 
 let breakdown =
 "Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
-"Hours charged (rounded): "+hoursRounded+"\n\n"+
+"Hours charged (rounded): "+roundedHours+"\n\n"+
 "Cost hours: £"+costHours.toFixed(2)+"\n"+
 "Miles: "+miles.toFixed(2)+"\n"+
 "Cost miles: £"+costMiles.toFixed(2)+"\n\n"+
@@ -184,19 +193,26 @@ let breakdown =
 "Cost stairs: £"+costStairs.toFixed(2)+"\n\n"+
 "TOTAL: £"+total.toFixed(2);
 
-document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
+document.getElementById("result").innerHTML =
+"<b>Estimated working time:</b> "+finalHours+"h "+finalMinutes+"m<br>"+
+"<b>Hours charged (rounded):</b> "+roundedHours+"<br><br>"+
+"<b>Cost hours:</b> £"+costHours.toFixed(2)+"<br>"+
+"<b>Miles:</b> "+miles.toFixed(2)+"<br>"+
+"<b>Cost miles:</b> £"+costMiles.toFixed(2)+"<br><br>"+
+"<b>Total flights:</b> "+stairsTotal+"<br>"+
+"<b>Cost stairs:</b> £"+costStairs.toFixed(2)+"<br><br>"+
+"<b style='font-size:18px'>TOTAL: £"+total.toFixed(2)+"</b>"+
+"<div class='success'>Quote sent successfully! Check your email.</div>";
 
 emailjs.send("service_1e9jyk9","template_0tbv6y9",{
 name: document.getElementById("name").value,
 phone: document.getElementById("phone").value,
 email: document.getElementById("email").value,
-move_date: document.getElementById("moveDate").value,
+move_date: formattedDate,
 collection: collection,
 via: via,
 delivery: delivery,
 quote_breakdown: breakdown
-}).then(function(){
-document.getElementById("successMsg").innerHTML="Quote sent successfully! Check your email.";
 });
 
 });
