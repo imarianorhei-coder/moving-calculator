@@ -22,28 +22,26 @@ button:hover{background:#0056b3}
 <div class="container">
 <h1>Instant Moving Quote</h1>
 
-<form id="quoteForm"
-action="https://formsubmit.co/imarianorhei@gmail.com"
-method="POST">
+<form id="quoteForm" action="https://formsubmit.co/imarianorhei@gmail.com" method="POST">
 
 <input type="hidden" name="_subject" value="New Moving Quote Request">
-<input type="hidden" name="_template" value="box">
-<input type="hidden" name="_autoresponse" value="Thank you for your request. We will contact you shortly.">
+<input type="hidden" name="_captcha" value="false">
+<input type="hidden" name="_template" value="table">
 
 <label>Name *</label>
-<input type="text" name="Name" required>
+<input type="text" name="Name" id="name" required>
 
 <label>Phone *</label>
-<input type="text" name="Phone" required>
+<input type="text" name="Phone" id="phone" required>
 
 <label>Email *</label>
-<input type="email" name="Email" required>
+<input type="email" name="Email" id="email" required>
 
 <label>Move Date *</label>
-<input type="datetime-local" id="moveDate" name="Move Date" required>
+<input type="datetime-local" name="Move_Date" id="moveDate" required>
 
 <label>Hours (Minimum 2) *</label>
-<input type="number" id="hours" name="Hours" min="2" value="2" required>
+<input type="number" name="Hours" id="hours" min="2" value="2" required>
 
 <label>Do you need help with loading and unloading? *</label>
 <select id="service" name="Service" required>
@@ -55,10 +53,10 @@ method="POST">
 </select>
 
 <label>Collection Address *</label>
-<input type="text" id="collection" name="Collection Address" required>
+<input type="text" name="Collection_Address" id="collection" required>
 
 <label>Is there any flight of stairs / no lift?</label>
-<select id="stairsCollection">
+<select id="stairsCollection" name="Collection_Stairs">
 <option value="0">Ground floor / Lift</option>
 <option value="1">1 Flight</option>
 <option value="2">2 Flights</option>
@@ -67,10 +65,10 @@ method="POST">
 </select>
 
 <label>Via Address (optional)</label>
-<input type="text" id="via" name="Via Address">
+<input type="text" name="Via_Address" id="via">
 
 <label>Is there any flight of stairs / no lift?</label>
-<select id="stairsVia">
+<select id="stairsVia" name="Via_Stairs">
 <option value="0">Ground floor / Lift</option>
 <option value="1">1 Flight</option>
 <option value="2">2 Flights</option>
@@ -79,10 +77,10 @@ method="POST">
 </select>
 
 <label>Delivery Address *</label>
-<input type="text" id="delivery" name="Delivery Address" required>
+<input type="text" name="Delivery_Address" id="delivery" required>
 
 <label>Is there any flight of stairs / no lift?</label>
-<select id="stairsDelivery">
+<select id="stairsDelivery" name="Delivery_Stairs">
 <option value="0">Ground floor / Lift</option>
 <option value="1">1 Flight</option>
 <option value="2">2 Flights</option>
@@ -91,9 +89,9 @@ method="POST">
 </select>
 
 <label>Additional Information</label>
-<textarea name="Additional Info"></textarea>
+<textarea name="Additional_Info" id="info"></textarea>
 
-<input type="hidden" id="quoteBreakdown" name="Quote Breakdown">
+<input type="hidden" name="Quote_Breakdown" id="quoteBreakdown">
 
 <button type="submit">Get My Instant Quote</button>
 
@@ -102,43 +100,40 @@ method="POST">
 <div id="result" class="result"></div>
 </div>
 
-<script async
-src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places">
-</script>
+<script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyA-P2kaqlMH-EOFjVIHbZ4S0Ki8DN2WVFE&libraries=places"></script>
 
 <script>
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
 window.onload = function(){
-if(typeof google !== "undefined"){
 new google.maps.places.Autocomplete(document.getElementById('collection'));
 new google.maps.places.Autocomplete(document.getElementById('via'));
 new google.maps.places.Autocomplete(document.getElementById('delivery'));
-}
 };
 
 document.getElementById("quoteForm").addEventListener("submit", function(e){
 e.preventDefault();
-calculateQuote(true);
+calculateQuote();
 });
 
-function calculateQuote(sendEmail=false){
+function calculateQuote(){
 
-let hours = Math.max(2, parseInt(document.getElementById("hours").value));
+let hours = parseInt(document.getElementById("hours").value);
 let rate = parseFloat(document.getElementById("service").value);
-if(!rate){ alert("Please select service"); return; }
 
-let stairsTotal =
-parseInt(document.getElementById("stairsCollection").value) +
-parseInt(document.getElementById("stairsVia").value) +
-parseInt(document.getElementById("stairsDelivery").value);
+let stairsCollection = parseInt(document.getElementById("stairsCollection").value);
+let stairsVia = parseInt(document.getElementById("stairsVia").value);
+let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
+
+let stairsTotal = stairsCollection + stairsVia + stairsDelivery;
 
 let collection = document.getElementById("collection").value;
 let via = document.getElementById("via").value;
 let delivery = document.getElementById("delivery").value;
 
 let service = new google.maps.DistanceMatrixService();
+
 let destinations = via ? [via, delivery] : [delivery];
 
 service.getDistanceMatrix({
@@ -160,19 +155,14 @@ totalSeconds+=el.duration.value;
 let miles=totalMeters/1609.34;
 let costMiles=miles*1.5;
 let costHours=hours*rate;
-
-let costStairs=0;
-if(rate!==45){
-costStairs=stairsTotal*10;
-}
-
+let costStairs = rate===45 ? 0 : stairsTotal*10;
 let total=costHours+costMiles+costStairs;
 
-let loadingSeconds=45*60;
-let stairsSeconds=stairsTotal*15*60;
+let loadingSeconds=30*60;
+let stairsSeconds=stairsTotal*10*60;
 let estimatedSeconds=totalSeconds+loadingSeconds+stairsSeconds;
-let reservedSeconds=hours*3600;
 
+let reservedSeconds=hours*3600;
 if(estimatedSeconds<reservedSeconds){
 estimatedSeconds=reservedSeconds;
 }
@@ -181,32 +171,25 @@ let finalHours=Math.floor(estimatedSeconds/3600);
 let finalMinutes=Math.round((estimatedSeconds%3600)/60);
 
 let breakdown =
-"Hours charged: "+hours+
-"\nCost hours: £"+costHours.toFixed(2)+
-"\nMiles: "+miles.toFixed(2)+
-"\nCost miles: £"+costMiles.toFixed(2)+
-"\nTotal flights: "+stairsTotal+
-"\nCost stairs: £"+costStairs.toFixed(2)+
-"\nTotal final: £"+total.toFixed(2)+
-"\nEstimated total time: "+finalHours+"h "+finalMinutes+"m";
+"Hours charged: "+hours+"\n"+
+"Cost hours: £"+costHours.toFixed(2)+"\n"+
+"Miles: "+miles.toFixed(2)+"\n"+
+"Cost miles: £"+costMiles.toFixed(2)+"\n"+
+"Collection_Stairs: "+stairsCollection+"\n"+
+"Via_Stairs: "+stairsVia+"\n"+
+"Delivery_Stairs: "+stairsDelivery+"\n"+
+"Total flights: "+stairsTotal+"\n"+
+"Cost stairs: £"+costStairs.toFixed(2)+"\n"+
+"Total final: £"+total.toFixed(2)+"\n"+
+"Estimated total time: "+finalHours+"h "+finalMinutes+"m";
 
-document.getElementById("result").innerHTML =
-"<b>Hours charged:</b> "+hours+"<br>"+
-"<b>Cost hours:</b> £"+costHours.toFixed(2)+"<br>"+
-"<b>Miles:</b> "+miles.toFixed(2)+"<br>"+
-"<b>Cost miles:</b> £"+costMiles.toFixed(2)+"<br>"+
-"<b>Total flights:</b> "+stairsTotal+"<br>"+
-"<b>Cost stairs:</b> £"+costStairs.toFixed(2)+"<br><br>"+
-"<b>Total final:</b> £"+total.toFixed(2)+"<br>"+
-"<b>Estimated total time:</b> "+finalHours+"h "+finalMinutes+"m";
-
+document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
 document.getElementById("quoteBreakdown").value = breakdown;
 
-if(sendEmail){
 document.getElementById("quoteForm").submit();
-}
 
 });
+
 }
 
 </script>
