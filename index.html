@@ -52,11 +52,8 @@ button:hover{background:#0056b3}
 <option value="90">3 Men + Medium Van</option>
 </select>
 
-<label>Collection Postcode *</label>
-<input type="text" id="collection_postcode" required>
-
 <label>Collection Address *</label>
-<input type="text" id="collection_address" required>
+<input type="text" id="collection_address" placeholder="Start typing postcode or address" required>
 
 <label>Collection Stairs</label>
 <select id="stairsCollection">
@@ -67,11 +64,8 @@ button:hover{background:#0056b3}
 <option value="4">4 Flights</option>
 </select>
 
-<label>Via Postcode (optional)</label>
-<input type="text" id="via_postcode">
-
 <label>Via Address (optional)</label>
-<input type="text" id="via_address">
+<input type="text" id="via_address" placeholder="Start typing postcode or address">
 
 <label>Via Stairs</label>
 <select id="stairsVia">
@@ -82,11 +76,8 @@ button:hover{background:#0056b3}
 <option value="4">4 Flights</option>
 </select>
 
-<label>Delivery Postcode *</label>
-<input type="text" id="delivery_postcode" required>
-
 <label>Delivery Address *</label>
-<input type="text" id="delivery_address" required>
+<input type="text" id="delivery_address" placeholder="Start typing postcode or address" required>
 
 <label>Delivery Stairs</label>
 <select id="stairsDelivery">
@@ -115,79 +106,89 @@ button:hover{background:#0056b3}
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
-window.onload = function(){
-new google.maps.places.Autocomplete(document.getElementById('collection_address'));
-new google.maps.places.Autocomplete(document.getElementById('via_address'));
-new google.maps.places.Autocomplete(document.getElementById('delivery_address'));
-};
+let collectionData={}, viaData={}, deliveryData={};
 
-document.getElementById("quoteForm").addEventListener("submit", function(e){
+function extractAddress(place){
+  let number="",street="",postcode="",city="";
+  place.address_components.forEach(c=>{
+    if(c.types.includes("street_number")) number=c.long_name;
+    if(c.types.includes("route")) street=c.long_name;
+    if(c.types.includes("postal_code")) postcode=c.long_name;
+    if(c.types.includes("postal_town")||c.types.includes("locality")) city=c.long_name;
+  });
+  return {
+    number,street,postcode,city,
+    full: place.formatted_address
+  };
+}
+
+function initAutocomplete(){
+  const options={types:['address'],componentRestrictions:{country:"uk"}};
+
+  const cAuto=new google.maps.places.Autocomplete(document.getElementById('collection_address'),options);
+  const vAuto=new google.maps.places.Autocomplete(document.getElementById('via_address'),options);
+  const dAuto=new google.maps.places.Autocomplete(document.getElementById('delivery_address'),options);
+
+  cAuto.addListener('place_changed',()=>collectionData=extractAddress(cAuto.getPlace()));
+  vAuto.addListener('place_changed',()=>viaData=extractAddress(vAuto.getPlace()));
+  dAuto.addListener('place_changed',()=>deliveryData=extractAddress(dAuto.getPlace()));
+}
+
+google.maps.event.addDomListener(window,'load',initAutocomplete);
+
+document.getElementById("quoteForm").addEventListener("submit",function(e){
 e.preventDefault();
 calculateQuote();
 });
 
 function calculateQuote(){
 
-let rate = parseFloat(document.getElementById("service").value);
-let stairsCollection = parseInt(document.getElementById("stairsCollection").value);
-let stairsVia = parseInt(document.getElementById("stairsVia").value);
-let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
-let stairsTotal = stairsCollection + stairsVia + stairsDelivery;
+let rate=parseFloat(document.getElementById("service").value);
+let stairsCollection=parseInt(document.getElementById("stairsCollection").value);
+let stairsVia=parseInt(document.getElementById("stairsVia").value);
+let stairsDelivery=parseInt(document.getElementById("stairsDelivery").value);
+let stairsTotal=stairsCollection+stairsVia+stairsDelivery;
 
-let collection = document.getElementById("collection_address").value;
-let via = document.getElementById("via_address").value;
-let delivery = document.getElementById("delivery_address").value;
+let collection=document.getElementById("collection_address").value;
+let via=document.getElementById("via_address").value;
+let delivery=document.getElementById("delivery_address").value;
 
-let service = new google.maps.DistanceMatrixService();
-let destinations = via ? [via, delivery] : [delivery];
+let service=new google.maps.DistanceMatrixService();
+let destinations=via?[via,delivery]:[delivery];
 
 service.getDistanceMatrix({
 origins:[collection],
 destinations:destinations,
-travelMode: google.maps.TravelMode.DRIVING
-}, function(response,status){
+travelMode:google.maps.TravelMode.DRIVING
+},function(response,status){
 
-if(status!=="OK"){ alert("Distance calculation error"); return; }
+if(status!=="OK"){alert("Distance calculation error");return;}
 
-let totalMeters=0;
-let totalSeconds=0;
-
+let totalMeters=0,totalSeconds=0;
 response.rows[0].elements.forEach(el=>{
 totalMeters+=el.distance.value;
 totalSeconds+=el.duration.value;
 });
 
-let miles = totalMeters/1609.34;
-let costMiles = miles*1.5;
+let miles=totalMeters/1609.34;
+let costMiles=miles*1.5;
+let loadingTime=45*60;
+let stairsTime=stairsTotal*10*60;
 
-let loadingTime = 45*60;
-let stairsTime = stairsTotal*10*60;
+let estimatedSeconds=totalSeconds+loadingTime+stairsTime;
+let estimatedHours=estimatedSeconds/3600;
+let roundedHours=Math.ceil(estimatedHours);
+if(roundedHours<2)roundedHours=2;
 
-let estimatedSeconds = totalSeconds+loadingTime+stairsTime;
-let estimatedHours = estimatedSeconds/3600;
-let roundedHours = Math.ceil(estimatedHours);
-if(roundedHours < 2) roundedHours = 2;
+let costHours=roundedHours*rate;
+let costStairs=(rate!==45)?stairsTotal*10:0;
+let total=costHours+costMiles+costStairs;
 
-let costHours = roundedHours*rate;
-let costStairs = (rate !== 45) ? stairsTotal*10 : 0;
-let total = costHours+costMiles+costStairs;
+let finalHours=Math.floor(estimatedSeconds/3600);
+let finalMinutes=Math.round((estimatedSeconds%3600)/60);
+if(finalMinutes==60){finalHours++;finalMinutes=0;}
 
-let finalHours = Math.floor(estimatedSeconds/3600);
-let finalMinutes = Math.round((estimatedSeconds%3600)/60);
-if(finalMinutes == 60){ finalHours++; finalMinutes=0; }
-
-let breakdown =
-"🚚 Instant Moving Quote\n\n"+
-"Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
-"Hours charged: "+roundedHours+"\n\n"+
-"Cost hours: £"+costHours.toFixed(2)+"\n"+
-"Miles: "+miles.toFixed(2)+"\n"+
-"Cost miles: £"+costMiles.toFixed(2)+"\n"+
-"Total flights: "+stairsTotal+"\n"+
-"Cost stairs: £"+costStairs.toFixed(2)+"\n\n"+
-"TOTAL: £"+total.toFixed(2);
-
-document.getElementById("result").innerHTML =
+document.getElementById("result").innerHTML=
 "<b>Estimated working time:</b> "+finalHours+"h "+finalMinutes+"m<br>"+
 "<b>Hours charged:</b> "+roundedHours+"<br><br>"+
 "<b>Cost hours:</b> £"+costHours.toFixed(2)+"<br>"+
@@ -197,7 +198,14 @@ document.getElementById("result").innerHTML =
 "<b>Cost stairs:</b> £"+costStairs.toFixed(2)+"<br><br>"+
 "<b style='font-size:18px'>TOTAL: £"+total.toFixed(2)+"</b>";
 
-window.whatsappMessage = breakdown;
+window.whatsappMessage=
+"🚚 Instant Moving Quote\n\n"+
+"Collection: "+collectionData.full+"\n"+
+"Via: "+(viaData.full||"None")+"\n"+
+"Delivery: "+deliveryData.full+"\n\n"+
+"Estimated time: "+finalHours+"h "+finalMinutes+"m\n"+
+"Hours charged: "+roundedHours+"\n"+
+"TOTAL: £"+total.toFixed(2);
 
 });
 }
