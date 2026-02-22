@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Fast Any Moves | Parking Agreement</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{font-family:Arial;margin:0;background:#f4f6f9}
+.container{max-width:900px;margin:40px auto;background:#fff;padding:35px;border-radius:12px;box-shadow:0 8px 25px rgba(0,0,0,0.08)}
+.company{text-align:center;font-size:22px;font-weight:bold;color:#0b3d91;margin-bottom:5px}
+h1{text-align:center;color:#0b3d91;margin-bottom:5px}
+h2{text-align:center;font-weight:normal;color:#555;margin-top:0;margin-bottom:30px}
+label{font-weight:bold;display:block;margin-top:15px}
+input,textarea{width:100%;padding:10px;margin-top:5px;border-radius:6px;border:1px solid #ccc}
+button{width:100%;padding:14px;margin-top:25px;background:#0b3d91;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer}
+button:hover{background:#072c66}
+canvas{border:1px solid #ccc;border-radius:6px;margin-top:10px;width:100%;height:200px}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="company">FAST ANY MOVES LTD</div>
+<h1>Parking Fine Liability Agreement</h1>
+<h2>Client Signature Required</h2>
+
+<form id="agreementForm">
+
+<label>Move Date *</label>
+<input type="datetime-local" id="moveDate" required>
+
+<label>Driver Name *</label>
+<input type="text" id="driverName" required>
+
+<label>Van Registration *</label>
+<input type="text" id="vanReg" required>
+
+<label>Client Full Name *</label>
+<input type="text" id="clientName" required>
+
+<label>Collection Address *</label>
+<textarea id="collection" required></textarea>
+
+<label>Delivery Address *</label>
+<textarea id="delivery" required></textarea>
+
+<label>Agreement *</label>
+<textarea readonly>
+I confirm that suitable legal parking has not been arranged at the collection or delivery address.
+
+If the driver receives a parking fine (PCN) due to parking restrictions while carrying out the agreed removal service, I (the client) agree to cover the full cost of the fine and any associated administrative fees.
+
+This agreement is legally binding for the stated move date.
+</textarea>
+
+<label>Client Signature (Sign Below) *</label>
+<canvas id="signaturePad"></canvas>
+<button type="button" onclick="clearSignature()">Clear Signature</button>
+
+<button type="submit">Confirm & Send</button>
+
+</form>
+
+</div>
+
+<script>
+
+let canvas = document.getElementById("signaturePad");
+let ctx = canvas.getContext("2d");
+let drawing = false;
+
+canvas.addEventListener("mousedown", start);
+canvas.addEventListener("mouseup", stop);
+canvas.addEventListener("mousemove", draw);
+
+canvas.addEventListener("touchstart", start);
+canvas.addEventListener("touchend", stop);
+canvas.addEventListener("touchmove", drawTouch);
+
+function start(e){ drawing=true; }
+function stop(){ drawing=false; ctx.beginPath(); }
+
+function draw(e){
+if(!drawing) return;
+ctx.lineWidth=2;
+ctx.lineCap="round";
+ctx.strokeStyle="#000";
+ctx.lineTo(e.offsetX,e.offsetY);
+ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(e.offsetX,e.offsetY);
+}
+
+function drawTouch(e){
+e.preventDefault();
+let rect=canvas.getBoundingClientRect();
+let touch=e.touches[0];
+let x=touch.clientX-rect.left;
+let y=touch.clientY-rect.top;
+if(!drawing) return;
+ctx.lineWidth=2;
+ctx.lineCap="round";
+ctx.strokeStyle="#000";
+ctx.lineTo(x,y);
+ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(x,y);
+}
+
+function clearSignature(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+
+document.getElementById("agreementForm").addEventListener("submit",function(e){
+e.preventDefault();
+
+let signatureData = canvas.toDataURL();
+if(signatureData.length < 1000){
+alert("Client signature required.");
+return;
+}
+
+let message =
+"📄 PARKING FINE LIABILITY AGREEMENT\n\n"+
+"Move Date: "+document.getElementById("moveDate").value+"\n\n"+
+"Driver: "+document.getElementById("driverName").value+"\n"+
+"Van Reg: "+document.getElementById("vanReg").value+"\n\n"+
+"Client: "+document.getElementById("clientName").value+"\n\n"+
+"Collection:\n"+document.getElementById("collection").value+"\n\n"+
+"Delivery:\n"+document.getElementById("delivery").value+"\n\n"+
+"Client signed digitally.\n";
+
+window.open("https://wa.me/447846769519?text="+encodeURIComponent(message),"_blank");
+
+});
+
+</script>
+
+</body>
+</html>
