@@ -5,6 +5,8 @@
 <title>Fast Any Moves | Parking Agreement</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
 body{font-family:Arial;margin:0;background:#f4f6f9}
 .container{max-width:900px;margin:40px auto;background:#fff;padding:35px;border-radius:12px;box-shadow:0 8px 25px rgba(0,0,0,0.08)}
@@ -49,16 +51,7 @@ canvas{border:1px solid #ccc;border-radius:6px;margin-top:10px;width:100%;height
 <textarea id="delivery" required></textarea>
 
 <label>Parking Situation Description *</label>
-<textarea id="description" placeholder="Describe parking situation or restrictions..." required></textarea>
-
-<label>Upload Photo – Van Location (if applicable)</label>
-<input type="file" accept="image/*">
-
-<label>Upload Photo – Parking Restriction Sign (if applicable)</label>
-<input type="file" accept="image/*">
-
-<label>Upload Photo – PCN (if issued)</label>
-<input type="file" accept="image/*">
+<textarea id="description" required></textarea>
 
 <div class="note">
 By signing below, you confirm that you accept responsibility for any parking fines (PCN) issued during or after the move due to lack of suitable legal parking at your property.  
@@ -69,13 +62,15 @@ You agree to reimburse Fast Any Moves Ltd within 48 hours of receiving evidence.
 <canvas id="signaturePad"></canvas>
 <button type="button" onclick="clearSignature()">Clear Signature</button>
 
-<button type="submit">Confirm & Send via WhatsApp</button>
+<button type="submit">Generate PDF & Send</button>
 
 </form>
 
 </div>
 
 <script>
+
+const { jsPDF } = window.jspdf;
 
 let canvas = document.getElementById("signaturePad");
 let ctx = canvas.getContext("2d");
@@ -132,17 +127,49 @@ alert("Client signature required.");
 return;
 }
 
+let moveDate = document.getElementById("moveDate").value;
+let driver = document.getElementById("driverName").value;
+let vanReg = document.getElementById("vanReg").value;
+let client = document.getElementById("clientName").value;
+let collection = document.getElementById("collection").value;
+let delivery = document.getElementById("delivery").value;
+let description = document.getElementById("description").value;
+
+let doc = new jsPDF();
+
+doc.setFontSize(16);
+doc.text("FAST ANY MOVES LTD", 20, 20);
+doc.setFontSize(14);
+doc.text("Parking Fine Liability Agreement", 20, 30);
+
+doc.setFontSize(11);
+doc.text("Move Date: " + moveDate, 20, 45);
+doc.text("Driver: " + driver, 20, 52);
+doc.text("Van Registration: " + vanReg, 20, 59);
+doc.text("Client: " + client, 20, 66);
+
+doc.text("Collection Address:", 20, 80);
+doc.text(collection, 20, 87);
+
+doc.text("Delivery Address:", 20, 105);
+doc.text(delivery, 20, 112);
+
+doc.text("Parking Description:", 20, 130);
+doc.text(description, 20, 137);
+
+doc.text("Client accepts liability for any parking fines (PCN) issued.", 20, 155);
+doc.text("Payment must be reimbursed within 48 hours of notification.", 20, 162);
+
+doc.addImage(signatureData, "PNG", 20, 175, 80, 30);
+doc.text("Client Signature", 20, 210);
+
+doc.save("Parking_Agreement_"+client+".pdf");
+
 let message =
-"📄 PARKING FINE LIABILITY AGREEMENT\n\n"+
-"Move Date: "+document.getElementById("moveDate").value+"\n\n"+
-"Driver: "+document.getElementById("driverName").value+"\n"+
-"Van Reg: "+document.getElementById("vanReg").value+"\n\n"+
-"Client: "+document.getElementById("clientName").value+"\n\n"+
-"Collection:\n"+document.getElementById("collection").value+"\n\n"+
-"Delivery:\n"+document.getElementById("delivery").value+"\n\n"+
-"Parking Description:\n"+document.getElementById("description").value+"\n\n"+
-"Client has signed and accepted liability.\n\n"+
-"⚠ Please attach photos (Van / Sign / PCN) in this WhatsApp chat.";
+"📄 Parking Agreement Signed\n\nClient: "+client+
+"\nMove Date: "+moveDate+
+"\nVan: "+vanReg+
+"\n\nPDF generated. Please attach the file in this chat.";
 
 window.open("https://wa.me/447846769519?text="+encodeURIComponent(message),"_blank");
 
