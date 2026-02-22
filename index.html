@@ -8,8 +8,8 @@
 <style>
 body{font-family:Arial;background:#f4f6f9;margin:0}
 .container{max-width:750px;margin:40px auto;background:#fff;padding:30px;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.08)}
-h1{text-align:center;margin-bottom:5px}
 h2{text-align:center;color:#1e3a8a;margin:0}
+h1{text-align:center;margin:5px 0}
 .subtitle{text-align:center;color:#555;margin-bottom:25px}
 label{font-weight:bold;display:block;margin-top:15px}
 input,select,textarea{width:100%;padding:10px;margin-top:5px;border-radius:6px;border:1px solid #ccc}
@@ -52,8 +52,19 @@ button:hover{background:#0056b3}
 <option value="90">3 Men + Medium Van</option>
 </select>
 
-<label>Collection Address *</label>
-<input type="text" id="collection_address" placeholder="Start typing postcode or address" required>
+<h3>Collection Address *</h3>
+
+<label>House Number / Name *</label>
+<input type="text" id="collection_number" required>
+
+<label>Street *</label>
+<input type="text" id="collection_street" required>
+
+<label>Postcode *</label>
+<input type="text" id="collection_postcode" required>
+
+<label>City *</label>
+<input type="text" id="collection_city" required>
 
 <label>Collection Stairs</label>
 <select id="stairsCollection">
@@ -64,8 +75,19 @@ button:hover{background:#0056b3}
 <option value="4">4 Flights</option>
 </select>
 
-<label>Via Address (optional)</label>
-<input type="text" id="via_address" placeholder="Start typing postcode or address">
+<h3>Via Address (optional)</h3>
+
+<label>House Number / Name</label>
+<input type="text" id="via_number">
+
+<label>Street</label>
+<input type="text" id="via_street">
+
+<label>Postcode</label>
+<input type="text" id="via_postcode">
+
+<label>City</label>
+<input type="text" id="via_city">
 
 <label>Via Stairs</label>
 <select id="stairsVia">
@@ -76,8 +98,19 @@ button:hover{background:#0056b3}
 <option value="4">4 Flights</option>
 </select>
 
-<label>Delivery Address *</label>
-<input type="text" id="delivery_address" placeholder="Start typing postcode or address" required>
+<h3>Delivery Address *</h3>
+
+<label>House Number / Name *</label>
+<input type="text" id="delivery_number" required>
+
+<label>Street *</label>
+<input type="text" id="delivery_street" required>
+
+<label>Postcode *</label>
+<input type="text" id="delivery_postcode" required>
+
+<label>City *</label>
+<input type="text" id="delivery_city" required>
 
 <label>Delivery Stairs</label>
 <select id="stairsDelivery">
@@ -100,41 +133,11 @@ button:hover{background:#0056b3}
 
 </div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac"></script>
 
 <script>
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
-
-let collectionData={}, viaData={}, deliveryData={};
-
-function extractAddress(place){
-  let number="",street="",postcode="",city="";
-  place.address_components.forEach(c=>{
-    if(c.types.includes("street_number")) number=c.long_name;
-    if(c.types.includes("route")) street=c.long_name;
-    if(c.types.includes("postal_code")) postcode=c.long_name;
-    if(c.types.includes("postal_town")||c.types.includes("locality")) city=c.long_name;
-  });
-  return {
-    number,street,postcode,city,
-    full: place.formatted_address
-  };
-}
-
-function initAutocomplete(){
-  const options={types:['address'],componentRestrictions:{country:"uk"}};
-
-  const cAuto=new google.maps.places.Autocomplete(document.getElementById('collection_address'),options);
-  const vAuto=new google.maps.places.Autocomplete(document.getElementById('via_address'),options);
-  const dAuto=new google.maps.places.Autocomplete(document.getElementById('delivery_address'),options);
-
-  cAuto.addListener('place_changed',()=>collectionData=extractAddress(cAuto.getPlace()));
-  vAuto.addListener('place_changed',()=>viaData=extractAddress(vAuto.getPlace()));
-  dAuto.addListener('place_changed',()=>deliveryData=extractAddress(dAuto.getPlace()));
-}
-
-google.maps.event.addDomListener(window,'load',initAutocomplete);
 
 document.getElementById("quoteForm").addEventListener("submit",function(e){
 e.preventDefault();
@@ -144,14 +147,32 @@ calculateQuote();
 function calculateQuote(){
 
 let rate=parseFloat(document.getElementById("service").value);
+
 let stairsCollection=parseInt(document.getElementById("stairsCollection").value);
 let stairsVia=parseInt(document.getElementById("stairsVia").value);
 let stairsDelivery=parseInt(document.getElementById("stairsDelivery").value);
 let stairsTotal=stairsCollection+stairsVia+stairsDelivery;
 
-let collection=document.getElementById("collection_address").value;
-let via=document.getElementById("via_address").value;
-let delivery=document.getElementById("delivery_address").value;
+let collection=
+document.getElementById("collection_number").value+" "+
+document.getElementById("collection_street").value+", "+
+document.getElementById("collection_postcode").value+", "+
+document.getElementById("collection_city").value;
+
+let delivery=
+document.getElementById("delivery_number").value+" "+
+document.getElementById("delivery_street").value+", "+
+document.getElementById("delivery_postcode").value+", "+
+document.getElementById("delivery_city").value;
+
+let via="";
+if(document.getElementById("via_street").value!==""){
+via=
+document.getElementById("via_number").value+" "+
+document.getElementById("via_street").value+", "+
+document.getElementById("via_postcode").value+", "+
+document.getElementById("via_city").value;
+}
 
 let service=new google.maps.DistanceMatrixService();
 let destinations=via?[via,delivery]:[delivery];
@@ -172,6 +193,7 @@ totalSeconds+=el.duration.value;
 
 let miles=totalMeters/1609.34;
 let costMiles=miles*1.5;
+
 let loadingTime=45*60;
 let stairsTime=stairsTotal*10*60;
 
@@ -200,9 +222,9 @@ document.getElementById("result").innerHTML=
 
 window.whatsappMessage=
 "🚚 Instant Moving Quote\n\n"+
-"Collection: "+collectionData.full+"\n"+
-"Via: "+(viaData.full||"None")+"\n"+
-"Delivery: "+deliveryData.full+"\n\n"+
+"Collection: "+collection+"\n"+
+"Via: "+(via||"None")+"\n"+
+"Delivery: "+delivery+"\n\n"+
 "Estimated time: "+finalHours+"h "+finalMinutes+"m\n"+
 "Hours charged: "+roundedHours+"\n"+
 "TOTAL: £"+total.toFixed(2);
