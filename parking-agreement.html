@@ -16,6 +16,7 @@ input,textarea{width:100%;padding:10px;margin-top:5px;border-radius:6px;border:1
 button{width:100%;padding:14px;margin-top:25px;background:#0b3d91;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer}
 button:hover{background:#072c66}
 canvas{border:1px solid #ccc;border-radius:6px;margin-top:10px;width:100%;height:200px}
+.note{background:#eef3ff;padding:15px;border-radius:8px;margin-top:15px;font-size:14px}
 </style>
 </head>
 
@@ -25,7 +26,7 @@ canvas{border:1px solid #ccc;border-radius:6px;margin-top:10px;width:100%;height
 
 <div class="company">FAST ANY MOVES LTD</div>
 <h1>Parking Fine Liability Agreement</h1>
-<h2>Client Signature Required</h2>
+<h2>Client Confirmation Required</h2>
 
 <form id="agreementForm">
 
@@ -47,20 +48,28 @@ canvas{border:1px solid #ccc;border-radius:6px;margin-top:10px;width:100%;height
 <label>Delivery Address *</label>
 <textarea id="delivery" required></textarea>
 
-<label>Agreement *</label>
-<textarea readonly>
-I confirm that suitable legal parking has not been arranged at the collection or delivery address.
+<label>Parking Situation Description *</label>
+<textarea id="description" placeholder="Describe parking situation or restrictions..." required></textarea>
 
-If the driver receives a parking fine (PCN) due to parking restrictions while carrying out the agreed removal service, I (the client) agree to cover the full cost of the fine and any associated administrative fees.
+<label>Upload Photo – Van Location (if applicable)</label>
+<input type="file" accept="image/*">
 
-This agreement is legally binding for the stated move date.
-</textarea>
+<label>Upload Photo – Parking Restriction Sign (if applicable)</label>
+<input type="file" accept="image/*">
 
-<label>Client Signature (Sign Below) *</label>
+<label>Upload Photo – PCN (if issued)</label>
+<input type="file" accept="image/*">
+
+<div class="note">
+By signing below, you confirm that you accept responsibility for any parking fines (PCN) issued during or after the move due to lack of suitable legal parking at your property.  
+You agree to reimburse Fast Any Moves Ltd within 48 hours of receiving evidence.
+</div>
+
+<label>Client Signature *</label>
 <canvas id="signaturePad"></canvas>
 <button type="button" onclick="clearSignature()">Clear Signature</button>
 
-<button type="submit">Confirm & Send</button>
+<button type="submit">Confirm & Send via WhatsApp</button>
 
 </form>
 
@@ -80,7 +89,7 @@ canvas.addEventListener("touchstart", start);
 canvas.addEventListener("touchend", stop);
 canvas.addEventListener("touchmove", drawTouch);
 
-function start(e){ drawing=true; }
+function start(){ drawing=true; }
 function stop(){ drawing=false; ctx.beginPath(); }
 
 function draw(e){
@@ -131,7 +140,9 @@ let message =
 "Client: "+document.getElementById("clientName").value+"\n\n"+
 "Collection:\n"+document.getElementById("collection").value+"\n\n"+
 "Delivery:\n"+document.getElementById("delivery").value+"\n\n"+
-"Client signed digitally.\n";
+"Parking Description:\n"+document.getElementById("description").value+"\n\n"+
+"Client has signed and accepted liability.\n\n"+
+"⚠ Please attach photos (Van / Sign / PCN) in this WhatsApp chat.";
 
 window.open("https://wa.me/447846769519?text="+encodeURIComponent(message),"_blank");
 
