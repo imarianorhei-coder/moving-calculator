@@ -15,6 +15,8 @@ label{font-weight:bold;display:block;margin-top:18px}
 input,select,textarea{width:100%;padding:11px;margin-top:6px;border-radius:6px;border:1px solid #ccc}
 button{width:100%;padding:15px;margin-top:25px;background:#0b3d91;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer}
 button:hover{background:#072c66}
+.whatsapp{background:#25D366;margin-top:10px}
+.whatsapp:hover{background:#1da851}
 .result{margin-top:30px;padding:25px;background:#eef3ff;border-radius:10px}
 .total{font-size:20px;font-weight:bold;color:#0b3d91}
 hr{margin:25px 0}
@@ -115,6 +117,8 @@ hr{margin:25px 0}
 
 <script>
 
+let finalMessage = "";
+
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
 document.getElementById("quoteForm").addEventListener("submit", function(e){
@@ -125,6 +129,7 @@ calculateQuote();
 function calculateQuote(){
 
 let rate = parseFloat(document.getElementById("service").value);
+let serviceText = document.getElementById("service").options[document.getElementById("service").selectedIndex].text;
 
 let stairsCollection = parseInt(document.getElementById("stairsCollection").value);
 let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
@@ -141,6 +146,11 @@ document.getElementById("d_house").value + ", " +
 document.getElementById("d_street").value + ", " +
 document.getElementById("d_postcode").value + ", " +
 document.getElementById("d_city").value;
+
+let name = document.getElementById("name").value;
+let phone = document.getElementById("phone").value;
+let email = document.getElementById("email").value;
+let moveDate = document.getElementById("moveDate").value;
 
 let service = new google.maps.DistanceMatrixService();
 
@@ -174,7 +184,7 @@ let finalHours=Math.floor(estimatedSeconds/3600);
 let finalMinutes=Math.round((estimatedSeconds%3600)/60);
 if(finalMinutes==60){finalHours++;finalMinutes=0;}
 
-let resultHTML = `
+document.getElementById("result").innerHTML = `
 <b>Estimated working time:</b> ${finalHours}h ${finalMinutes}m<br>
 <b>Hours charged:</b> ${roundedHours}<br><br>
 <b>Cost hours:</b> £${costHours.toFixed(2)}<br>
@@ -183,12 +193,35 @@ let resultHTML = `
 <b>Total flights:</b> ${stairsTotal}<br>
 <b>Cost stairs:</b> £${costStairs.toFixed(2)}<br><br>
 <div class="total">TOTAL: £${total.toFixed(2)}</div>
+<button class="whatsapp" onclick="sendWhatsApp()">Send via WhatsApp</button>
 `;
 
-document.getElementById("result").innerHTML = resultHTML;
+finalMessage =
+"🚚 Instant Moving Quote\n\n" +
+"Name: " + name + "\n" +
+"Phone: " + phone + "\n" +
+"Email: " + email + "\n" +
+"Move Date: " + moveDate + "\n\n" +
+"Service: " + serviceText + "\n\n" +
+"Collection: " + collection + "\n" +
+"Delivery: " + delivery + "\n\n" +
+"Estimated working time: " + finalHours + "h " + finalMinutes + "m\n" +
+"Hours charged: " + roundedHours + "\n\n" +
+"Cost hours: £" + costHours.toFixed(2) + "\n" +
+"Miles: " + miles.toFixed(2) + "\n" +
+"Cost miles: £" + costMiles.toFixed(2) + "\n" +
+"Total flights: " + stairsTotal + "\n" +
+"Cost stairs: £" + costStairs.toFixed(2) + "\n\n" +
+"TOTAL: £" + total.toFixed(2);
 
 });
 }
+
+function sendWhatsApp(){
+let url = "https://wa.me/447846769519?text=" + encodeURIComponent(finalMessage);
+window.open(url, "_blank");
+}
+
 </script>
 
 </body>
