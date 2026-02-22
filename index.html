@@ -117,8 +117,6 @@ hr{margin:25px 0}
 
 <script>
 
-let finalMessage = "";
-
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
 document.getElementById("quoteForm").addEventListener("submit", function(e){
@@ -184,19 +182,7 @@ let finalHours=Math.floor(estimatedSeconds/3600);
 let finalMinutes=Math.round((estimatedSeconds%3600)/60);
 if(finalMinutes==60){finalHours++;finalMinutes=0;}
 
-document.getElementById("result").innerHTML = `
-<b>Estimated working time:</b> ${finalHours}h ${finalMinutes}m<br>
-<b>Hours charged:</b> ${roundedHours}<br><br>
-<b>Cost hours:</b> £${costHours.toFixed(2)}<br>
-<b>Miles:</b> ${miles.toFixed(2)}<br>
-<b>Cost miles:</b> £${costMiles.toFixed(2)}<br>
-<b>Total flights:</b> ${stairsTotal}<br>
-<b>Cost stairs:</b> £${costStairs.toFixed(2)}<br><br>
-<div class="total">TOTAL: £${total.toFixed(2)}</div>
-<button class="whatsapp" onclick="sendWhatsApp()">Send via WhatsApp</button>
-`;
-
-finalMessage =
+let message =
 "🚚 Instant Moving Quote\n\n" +
 "Name: " + name + "\n" +
 "Phone: " + phone + "\n" +
@@ -214,12 +200,22 @@ finalMessage =
 "Cost stairs: £" + costStairs.toFixed(2) + "\n\n" +
 "TOTAL: £" + total.toFixed(2);
 
-});
-}
+document.getElementById("result").innerHTML = `
+<b>Estimated working time:</b> ${finalHours}h ${finalMinutes}m<br>
+<b>Hours charged:</b> ${roundedHours}<br><br>
+<b>Cost hours:</b> £${costHours.toFixed(2)}<br>
+<b>Miles:</b> ${miles.toFixed(2)}<br>
+<b>Cost miles:</b> £${costMiles.toFixed(2)}<br>
+<b>Total flights:</b> ${stairsTotal}<br>
+<b>Cost stairs:</b> £${costStairs.toFixed(2)}<br><br>
+<div class="total">TOTAL: £${total.toFixed(2)}</div>
+<br>
+<button class="whatsapp" onclick="window.open('https://wa.me/447846769519?text='+encodeURIComponent(\`${message}\`),'_blank')">
+Send via WhatsApp
+</button>
+`;
 
-function sendWhatsApp(){
-let url = "https://wa.me/447846769519?text=" + encodeURIComponent(finalMessage);
-window.open(url, "_blank");
+});
 }
 
 </script>
