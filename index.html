@@ -13,11 +13,11 @@ label { font-weight:600; display:block; margin-top:15px; color:#333; }
 input, select, textarea { width:100%; padding:12px; margin-top:5px; border-radius:6px; border:1px solid #ccc; font-size:14px; }
 textarea { resize:vertical; }
 button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px; font-size:16px; font-weight:600; cursor:pointer; transition:0.3s; }
-#quoteBtn { background:#0B1F3A; color:#fff; }
-#quoteBtn:hover { background:#09406A; }
+#quoteBtn { background:#0B1F3A; color:#fff; } /* Albastru premium */
+#quoteBtn:hover { background:#094170; }
 #whatsappBtn { background:#25D366; color:#fff; }
 #whatsappBtn:hover { background:#1DA851; }
-#emailBtn { background:#007bff; color:#fff; }
+#emailBtn { background:#007bff; color:#fff; margin-top:10px; }
 #emailBtn:hover { background:#0056b3; }
 .result { margin-top:25px; padding:20px; background:#eef5ff; border-radius:8px; font-size:14px; white-space:pre-line; line-height:1.5; color:#0B1F3A; }
 </style>
@@ -95,17 +95,12 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <div id="result" class="result"></div>
 </div>
 
-<!-- GOOGLE MAPS API -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
-
-<!-- EMAILJS -->
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
-emailjs.init("UTKviVTwg9BJjYixe"); // public key
+emailjs.init("UTKviVTwg9BJjYixe");
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
-
-// Autocomplete adrese
 window.onload = function(){
   new google.maps.places.Autocomplete(document.getElementById('collection'));
   new google.maps.places.Autocomplete(document.getElementById('via'));
@@ -113,24 +108,23 @@ window.onload = function(){
 };
 
 document.getElementById("quoteForm").addEventListener("submit", function(e){
-  e.preventDefault(); calculateQuote();
+  e.preventDefault();
+  calculateQuote();
 });
 
-let breakdownGlobal = ""; // stocare pentru WhatsApp și email
-
 function calculateQuote(){
-  let rate=parseFloat(document.getElementById("service").value);
-  let stairsCollection=parseInt(document.getElementById("stairsCollection").value);
-  let stairsVia=parseInt(document.getElementById("stairsVia").value);
-  let stairsDelivery=parseInt(document.getElementById("stairsDelivery").value);
-  let stairsTotal = stairsCollection+stairsVia+stairsDelivery;
+  let rate = parseFloat(document.getElementById("service").value);
+  let stairsCollection = parseInt(document.getElementById("stairsCollection").value);
+  let stairsVia = parseInt(document.getElementById("stairsVia").value);
+  let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
+  let stairsTotal = stairsCollection + stairsVia + stairsDelivery;
 
-  let collection=document.getElementById("collection").value;
-  let via=document.getElementById("via").value;
-  let delivery=document.getElementById("delivery").value;
+  let collection = document.getElementById("collection").value;
+  let via = document.getElementById("via").value;
+  let delivery = document.getElementById("delivery").value;
 
   let service = new google.maps.DistanceMatrixService();
-  let destinations = via? [via, delivery] : [delivery];
+  let destinations = via ? [via, delivery] : [delivery];
 
   service.getDistanceMatrix({
     origins:[collection],
@@ -145,104 +139,117 @@ function calculateQuote(){
       totalSeconds+=el.duration.value;
     });
 
-    let miles=totalMeters/1609.34;
-    let costMiles=miles*1.5;
+    let miles = totalMeters/1609.34;
+    let costMiles = miles*1.5;
     let loadingTime=30*60;
     let stairsTime=stairsTotal*10*60;
     let estimatedSeconds=totalSeconds+loadingTime+stairsTime;
 
-    // Rotunjire la fiecare 30 de minute
     let estimatedHours = estimatedSeconds/3600;
-    let roundedHours = Math.ceil(estimatedHours*2)/2; // round up to nearest 0.5 hour
+    let roundedHours = Math.ceil(estimatedHours*2)/2;
     if(roundedHours<2) roundedHours=2;
 
     let costHours = roundedHours*rate;
     let costStairs = rate!==45? stairsTotal*10:0;
-    let total=costHours+costMiles+costStairs;
+    let total = costHours+costMiles+costStairs;
 
-    let finalHours=Math.floor(estimatedSeconds/3600);
-    let finalMinutes=Math.round((estimatedSeconds%3600)/60);
+    let finalHours = Math.floor(estimatedSeconds/3600);
+    let finalMinutes = Math.round((estimatedSeconds%3600)/60);
     if(finalMinutes===60){ finalHours++; finalMinutes=0; }
 
-    // Format UK dd/mm/yyyy hh:mm
-    let rawDate = document.getElementById("moveDate").value;
-    let dateObj = new Date(rawDate);
-    let formattedDate = dateObj.toLocaleString('en-GB', {
-      day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:false
-    });
+    let breakdown=
+      "Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
+      "Hours charged (rounded): "+roundedHours+"\n"+
+      "After reserved hours, any extra time will be charged at half-hour increments at the rate selected.\n\n"+
+      "Cost hours: £"+costHours.toFixed(2)+"\n"+
+      "Miles: "+miles.toFixed(2)+"\n"+
+      "Cost miles: £"+costMiles.toFixed(2)+"\n\n"+
+      "Collection Stairs: "+stairsCollection+"\n"+
+      "Via Stairs: "+stairsVia+"\n"+
+      "Delivery Stairs: "+stairsDelivery+"\n"+
+      "Total flights: "+stairsTotal+"\n"+
+      "Cost stairs: £"+costStairs.toFixed(2)+"\n\n"+
+      "TOTAL: £"+total.toFixed(2);
 
-    breakdownGlobal=
-      `Estimated working time: ${finalHours}h ${finalMinutes}m
-Hours charged (rounded): ${roundedHours}
-After reserved hours, any extra time will be charged at half-hour increments at the rate selected.
-
-Cost hours: £${costHours.toFixed(2)}
-Miles: ${miles.toFixed(2)}
-Cost miles: £${costMiles.toFixed(2)}
-
-Collection Stairs: ${stairsCollection}
-Via Stairs: ${stairsVia}
-Delivery Stairs: ${stairsDelivery}
-Total flights: ${stairsTotal}
-Cost stairs: £${costStairs.toFixed(2)}
-
-TOTAL: £${total.toFixed(2)}`;
-
-    document.getElementById("result").innerHTML = breakdownGlobal.replace(/\n/g,"<br>");
+    document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
   });
 }
 
 // WhatsApp
 function sendWhatsApp(){
-  if(!breakdownGlobal){ alert("Please calculate first"); return; }
-  let fullMessage=`Fast Any Moves Ltd – Instant Moving Quote
+  let text=document.getElementById("result").innerText;
+  if(!text){ alert("Please calculate first"); return; }
+  window.open("https://wa.me/447846769519?text="+encodeURIComponent(text),"_blank");
+}
 
-Name: ${document.getElementById("name").value}
-Phone: ${document.getElementById("phone").value}
-Email: ${document.getElementById("email").value}
-Move Date: ${document.getElementById("moveDate").value}
-Service: ${document.getElementById("service").options[document.getElementById("service").selectedIndex].text}
+// Email
+function sendEmail(){
+  let name=document.getElementById("name").value;
+  let phone=document.getElementById("phone").value;
+  let email=document.getElementById("email").value;
+  let moveDate=document.getElementById("moveDate").value;
+  let service=document.getElementById("service").options[document.getElementById("service").selectedIndex].text;
+  let collection=document.getElementById("collection").value;
+  let via=document.getElementById("via").value;
+  let delivery=document.getElementById("delivery").value;
+  let stairsCollection=document.getElementById("stairsCollection").value;
+  let stairsVia=document.getElementById("stairsVia").value;
+  let stairsDelivery=document.getElementById("stairsDelivery").value;
+  let info=document.getElementById("info").value;
+  let quote=document.getElementById("result").innerText;
 
-Collection: ${document.getElementById("collection").value}
-Collection Stairs: ${document.getElementById("stairsCollection").value}
-Via: ${document.getElementById("via").value}
-Via Stairs: ${document.getElementById("stairsVia").value}
-Delivery: ${document.getElementById("delivery").value}
-Delivery Stairs: ${document.getElementById("stairsDelivery").value}
+  // Formatare UK date/time
+  let dateObj = new Date(moveDate);
+  let formattedDate = dateObj.getDate().toString().padStart(2,'0') + "/" +
+                      (dateObj.getMonth()+1).toString().padStart(2,'0') + "/" +
+                      dateObj.getFullYear() + " " +
+                      dateObj.getHours().toString().padStart(2,'0') + ":" +
+                      dateObj.getMinutes().toString().padStart(2,'0');
+
+  let fullMessage =
+`Fast Any Moves Ltd – Instant Moving Quote
+
+Name: ${name}
+Phone: ${phone}
+Email: ${email}
+Move Date: ${formattedDate}
+Service: ${service}
+
+Collection: ${collection}
+Collection Stairs: ${stairsCollection}
+Via: ${via}
+Via Stairs: ${stairsVia}
+Delivery: ${delivery}
+Delivery Stairs: ${stairsDelivery}
 
 Additional Information:
-${document.getElementById("info").value}
+${info}
 
 Quote Details:
-${breakdownGlobal}`;
+${quote}`;
 
-  window.open("https://wa.me/447846769519?text="+encodeURIComponent(fullMessage),"_blank");
-}
+  if(!quote){ alert("Please calculate first"); return; }
 
-// EmailJS
-function sendEmail(){
-  if(!breakdownGlobal){ alert("Please calculate first"); return; }
-
-  let templateParams={
-    name: document.getElementById("name").value,
-    phone: document.getElementById("phone").value,
-    email: document.getElementById("email").value,
-    move_date: document.getElementById("moveDate").value,
-    service: document.getElementById("service").options[document.getElementById("service").selectedIndex].text,
-    collection: document.getElementById("collection").value,
-    stairs_collection: document.getElementById("stairsCollection").value,
-    via: document.getElementById("via").value,
-    stairs_via: document.getElementById("stairsVia").value,
-    delivery: document.getElementById("delivery").value,
-    stairs_delivery: document.getElementById("stairsDelivery").value,
-    info: document.getElementById("info").value,
-    quote_breakdown: breakdownGlobal
-  };
-
-  emailjs.send("service_1e9jyk9","template_0tbv6y9",templateParams)
-  .then(function(){ alert("Email sent successfully"); }, function(err){ alert("Email could not be sent: "+JSON.stringify(err)); });
+  emailjs.send("service_1e9jyk9","template_0tbv6y9",{
+    name: name,
+    phone: phone,
+    email: email,
+    move_date: formattedDate,
+    service: service,
+    collection: collection,
+    stairs_collection: stairsCollection,
+    via: via,
+    stairs_via: stairsVia,
+    delivery: delivery,
+    stairs_delivery: stairsDelivery,
+    info: info,
+    quote_breakdown: quote
+  }).then(function(){
+    alert("Email sent successfully!");
+  }, function(error){
+    alert("Email sending failed: "+JSON.stringify(error));
+  });
 }
 </script>
-
 </body>
 </html>
