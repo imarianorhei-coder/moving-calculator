@@ -92,7 +92,7 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <div id="result" class="result"></div>
 </div>
 
-<!-- GOOGLE MAPS -->
+<!-- GOOGLE MAPS API -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
 
 <script>
@@ -142,8 +142,9 @@ function calculateQuote(){
     let stairsTime=stairsTotal*10*60;
     let estimatedSeconds=totalSeconds+loadingTime+stairsTime;
 
+    // Rotunjire la fiecare 30 de minute
     let estimatedHours = estimatedSeconds/3600;
-    let roundedHours = Math.ceil(estimatedHours);
+    let roundedHours = Math.ceil(estimatedHours*2)/2; // round up to nearest 0.5 hour
     if(roundedHours<2) roundedHours=2;
 
     let costHours = roundedHours*rate;
@@ -156,7 +157,8 @@ function calculateQuote(){
 
     let breakdown=
       "Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
-      "Hours charged (rounded): "+roundedHours+"\n\n"+
+      "Hours charged (rounded): "+roundedHours+"\n"+
+      "After reserved hours, any extra time will be charged at half-hour increments at the rate selected.\n\n"+
       "Cost hours: £"+costHours.toFixed(2)+"\n"+
       "Miles: "+miles.toFixed(2)+"\n"+
       "Cost miles: £"+costMiles.toFixed(2)+"\n\n"+
@@ -171,10 +173,46 @@ function calculateQuote(){
   });
 }
 
+// WhatsApp send complet
 function sendWhatsApp(){
-  let text=document.getElementById("result").innerText;
-  if(!text){ alert("Please calculate first"); return; }
-  window.open("https://wa.me/447846769519?text="+encodeURIComponent(text),"_blank");
+  let name=document.getElementById("name").value;
+  let phone=document.getElementById("phone").value;
+  let email=document.getElementById("email").value;
+  let moveDate=document.getElementById("moveDate").value;
+  let service=document.getElementById("service").options[document.getElementById("service").selectedIndex].text;
+  let collection=document.getElementById("collection").value;
+  let via=document.getElementById("via").value;
+  let delivery=document.getElementById("delivery").value;
+  let stairsCollection=document.getElementById("stairsCollection").value;
+  let stairsVia=document.getElementById("stairsVia").value;
+  let stairsDelivery=document.getElementById("stairsDelivery").value;
+  let info=document.getElementById("info").value;
+  let quote=document.getElementById("result").innerText;
+
+  let fullMessage =
+`Fast Any Moves Ltd – Instant Moving Quote
+
+Name: ${name}
+Phone: ${phone}
+Email: ${email}
+Move Date: ${moveDate}
+Service: ${service}
+
+Collection: ${collection}
+Collection Stairs: ${stairsCollection}
+Via: ${via}
+Via Stairs: ${stairsVia}
+Delivery: ${delivery}
+Delivery Stairs: ${stairsDelivery}
+
+Additional Information:
+${info}
+
+Quote Details:
+${quote}`;
+
+  if(!quote){ alert("Please calculate first"); return; }
+  window.open("https://wa.me/447846769519?text="+encodeURIComponent(fullMessage),"_blank");
 }
 </script>
 </body>
