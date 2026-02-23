@@ -7,7 +7,7 @@
 <style>
 body { font-family: 'Montserrat', Arial, sans-serif; background:#f0f2f5; margin:0; }
 .container { max-width: 780px; margin: 40px auto; background:#fff; padding:30px; border-radius:12px; box-shadow: 0 8px 25px rgba(0,0,0,0.12); }
-h1 { text-align:center; color:#0B1F3A; font-size:28px; margin-bottom:5px; } /* Albastru */
+h1 { text-align:center; color:#0B1F3A; font-size:28px; margin-bottom:5px; }
 h2 { text-align:center; font-weight:400; color:#3A3A3A; font-size:18px; margin-bottom:25px; }
 label { font-weight:600; display:block; margin-top:15px; color:#333; }
 input, select, textarea { width:100%; padding:12px; margin-top:5px; border-radius:6px; border:1px solid #ccc; font-size:14px; }
@@ -17,15 +17,14 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 #quoteBtn:hover { background:#FF6347; }
 #whatsappBtn { background:#25D366; color:#fff; }
 #whatsappBtn:hover { background:#1DA851; }
-#emailBtn { background:#007bff; color:#fff; }
-#emailBtn:hover { background:#0056b3; }
+#emailBtn { background:#1E90FF; color:#fff; }
+#emailBtn:hover { background:#187bcd; }
 .result { margin-top:25px; padding:20px; background:#eef5ff; border-radius:8px; font-size:14px; white-space:pre-line; line-height:1.5; color:#0B1F3A; }
 </style>
 </head>
 <body>
 
 <div class="container">
-
 <h1>Fast Any Moves Ltd</h1>
 <h2>Instant Moving Quote – Help us serve you better</h2>
 
@@ -95,17 +94,16 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <div id="result" class="result"></div>
 </div>
 
-<!-- GOOGLE MAPS API -->
+<!-- GOOGLE MAPS -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
-
 <!-- EMAILJS -->
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
 <script>
-emailjs.init("UTKviVTwg9BJjYixe"); // public key
+emailjs.init("UTKviVTwg9BJjYixe");
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
-// Autocomplete adrese
 window.onload = function(){
   new google.maps.places.Autocomplete(document.getElementById('collection'));
   new google.maps.places.Autocomplete(document.getElementById('via'));
@@ -121,16 +119,16 @@ function calculateQuote(){
   let stairsCollection=parseInt(document.getElementById("stairsCollection").value);
   let stairsVia=parseInt(document.getElementById("stairsVia").value);
   let stairsDelivery=parseInt(document.getElementById("stairsDelivery").value);
-  let stairsTotal = stairsCollection+stairsVia+stairsDelivery;
+  let stairsTotal=stairsCollection+stairsVia+stairsDelivery;
 
   let collection=document.getElementById("collection").value;
   let via=document.getElementById("via").value;
   let delivery=document.getElementById("delivery").value;
 
-  let service = new google.maps.DistanceMatrixService();
+  let serviceGM = new google.maps.DistanceMatrixService();
   let destinations = via? [via, delivery] : [delivery];
 
-  service.getDistanceMatrix({
+  serviceGM.getDistanceMatrix({
     origins:[collection],
     destinations:destinations,
     travelMode: google.maps.TravelMode.DRIVING
@@ -150,18 +148,18 @@ function calculateQuote(){
     let estimatedSeconds=totalSeconds+loadingTime+stairsTime;
 
     let estimatedHours = estimatedSeconds/3600;
-    let roundedHours = Math.ceil(estimatedHours*2)/2;
+    let roundedHours = Math.ceil(estimatedHours*2)/2; // round to nearest 0.5
     if(roundedHours<2) roundedHours=2;
 
     let costHours = roundedHours*rate;
     let costStairs = rate!==45? stairsTotal*10:0;
-    let total=costHours+costMiles+costStairs;
+    let total = costHours + costMiles + costStairs;
 
-    let finalHours=Math.floor(estimatedSeconds/3600);
-    let finalMinutes=Math.round((estimatedSeconds%3600)/60);
+    let finalHours = Math.floor(estimatedSeconds/3600);
+    let finalMinutes = Math.round((estimatedSeconds%3600)/60);
     if(finalMinutes===60){ finalHours++; finalMinutes=0; }
 
-    let breakdown=
+    let breakdown =
       "Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
       "Hours charged (rounded): "+roundedHours+"\n"+
       "After reserved hours, any extra time will be charged at half-hour increments at the rate selected.\n\n"+
@@ -181,69 +179,55 @@ function calculateQuote(){
 
 // WhatsApp
 function sendWhatsApp(){
-  let fullMessage = getFullMessage();
-  if(!fullMessage){ alert("Please calculate first"); return; }
-  window.open("https://wa.me/447846769519?text="+encodeURIComponent(fullMessage),"_blank");
+  let fullMessage = getFullFormMessage();
+  if(!document.getElementById("result").innerText){ alert("Please calculate first"); return; }
+  window.open("https://wa.me/447846769519?text="+encodeURIComponent(fullMessage), "_blank");
 }
 
-// EmailJS
+// E-mail
 function sendEmail(){
-  let fullMessage = getFullMessage();
-  if(!fullMessage){ alert("Please calculate first"); return; }
-  emailjs.send("service_1e9jyk9","template_b26js7h",{
+  let fullMessage = getFullFormMessage();
+  if(!document.getElementById("result").innerText){ alert("Please calculate first"); return; }
+
+  emailjs.send("service_1e9jyk9","template_0tbv6y9",{
     name: document.getElementById("name").value,
     phone: document.getElementById("phone").value,
     email: document.getElementById("email").value,
     move_date: document.getElementById("moveDate").value,
-    service: document.getElementById("service").options[document.getElementById("service").selectedIndex].text,
     collection: document.getElementById("collection").value,
     via: document.getElementById("via").value,
     delivery: document.getElementById("delivery").value,
-    stairsCollection: document.getElementById("stairsCollection").value,
-    stairsVia: document.getElementById("stairsVia").value,
-    stairsDelivery: document.getElementById("stairsDelivery").value,
+    stairs_collection: document.getElementById("stairsCollection").value,
+    stairs_via: document.getElementById("stairsVia").value,
+    stairs_delivery: document.getElementById("stairsDelivery").value,
     additional_info: document.getElementById("info").value,
     quote_breakdown: document.getElementById("result").innerText
-  });
+  })
+  .then(function(){ alert("E-mail sent successfully!"); }, function(err){ alert("Failed to send e-mail: "+JSON.stringify(err)); });
 }
 
-function getFullMessage(){
-  let name=document.getElementById("name").value;
-  let phone=document.getElementById("phone").value;
-  let email=document.getElementById("email").value;
-  let moveDate=document.getElementById("moveDate").value;
-  let service=document.getElementById("service").options[document.getElementById("service").selectedIndex].text;
-  let collection=document.getElementById("collection").value;
-  let via=document.getElementById("via").value;
-  let delivery=document.getElementById("delivery").value;
-  let stairsCollection=document.getElementById("stairsCollection").value;
-  let stairsVia=document.getElementById("stairsVia").value;
-  let stairsDelivery=document.getElementById("stairsDelivery").value;
-  let info=document.getElementById("info").value;
-  let quote=document.getElementById("result").innerText;
-
-  if(!quote) return null;
-
+// Funcție comună pentru WhatsApp și E-mail
+function getFullFormMessage(){
   return `Fast Any Moves Ltd – Instant Moving Quote
 
-Name: ${name}
-Phone: ${phone}
-Email: ${email}
-Move Date: ${moveDate}
-Service: ${service}
+Name: ${document.getElementById("name").value}
+Phone: ${document.getElementById("phone").value}
+Email: ${document.getElementById("email").value}
+Move Date: ${document.getElementById("moveDate").value}
+Service: ${document.getElementById("service").options[document.getElementById("service").selectedIndex].text}
 
-Collection: ${collection}
-Collection Stairs: ${stairsCollection}
-Via: ${via}
-Via Stairs: ${stairsVia}
-Delivery: ${delivery}
-Delivery Stairs: ${stairsDelivery}
+Collection: ${document.getElementById("collection").value}
+Collection Stairs: ${document.getElementById("stairsCollection").value}
+Via: ${document.getElementById("via").value}
+Via Stairs: ${document.getElementById("stairsVia").value}
+Delivery: ${document.getElementById("delivery").value}
+Delivery Stairs: ${document.getElementById("stairsDelivery").value}
 
 Additional Information:
-${info}
+${document.getElementById("info").value}
 
 Quote Details:
-${quote}`;
+${document.getElementById("result").innerText}`;
 }
 </script>
 </body>
