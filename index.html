@@ -6,18 +6,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body { font-family: 'Montserrat', Arial, sans-serif; background:#f0f2f5; margin:0; }
-.container { max-width: 780px; margin: 40px auto; background:#fff; padding:30px; border-radius:12px; box-shadow: 0 8px 25px rgba(0,0,0,0.12); }
-h1 { text-align:center; color:#0B1F3A; font-size:28px; margin-bottom:5px; }
-h2 { text-align:center; font-weight:400; color:#3A3A3A; font-size:18px; margin-bottom:25px; }
+.container { max-width: 780px; margin: 40px auto; background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 25px rgba(0,0,0,0.12); }
+h1 { text-align:center; color:#0B1F3A; font-size:30px; font-weight:800; margin-bottom:5px; }
+h2 { text-align:center; font-weight:500; color:#00B67A; font-size:18px; margin-bottom:25px; }
 label { font-weight:600; display:block; margin-top:15px; color:#333; }
-input, select, textarea { width:100%; padding:12px; margin-top:5px; border-radius:6px; border:1px solid #ccc; font-size:14px; }
+input, select, textarea { width:100%; padding:12px; margin-top:5px; border-radius:6px; border:1px solid #0B1F3A; font-size:14px; }
+input:focus, select:focus, textarea:focus { border-color:#00B67A; outline:none; }
 textarea { resize:vertical; }
 button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px; font-size:16px; font-weight:600; cursor:pointer; transition:0.3s; }
-#quoteBtn { background:#FF7F50; color:#fff; }
-#quoteBtn:hover { background:#FF6347; }
+#quoteBtn { background:linear-gradient(90deg,#FF7F50,#FF6347); color:#fff; }
+#quoteBtn:hover { background:linear-gradient(90deg,#FF6347,#FF4500); }
 #whatsappBtn { background:#25D366; color:#fff; }
 #whatsappBtn:hover { background:#1DA851; }
-.result { margin-top:25px; padding:20px; background:#eef5ff; border-radius:8px; font-size:14px; white-space:pre-line; line-height:1.5; color:#0B1F3A; }
+.result { margin-top:25px; padding:20px; background:#eef5ff; border-radius:8px; font-size:14px; white-space:pre-line; line-height:1.5; color:#0B1F3A; font-weight:500; }
 </style>
 </head>
 <body>
@@ -92,13 +93,13 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <div id="result" class="result"></div>
 </div>
 
-<!-- GOOGLE MAPS API -->
+<!-- GOOGLE MAPS -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
 
 <script>
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
-// Autocomplete adrese
+// Autocomplete pentru adrese
 window.onload = function(){
   new google.maps.places.Autocomplete(document.getElementById('collection'));
   new google.maps.places.Autocomplete(document.getElementById('via'));
@@ -142,9 +143,8 @@ function calculateQuote(){
     let stairsTime=stairsTotal*10*60;
     let estimatedSeconds=totalSeconds+loadingTime+stairsTime;
 
-    // Rotunjire la fiecare 30 de minute
     let estimatedHours = estimatedSeconds/3600;
-    let roundedHours = Math.ceil(estimatedHours*2)/2; // round up to nearest 0.5 hour
+    let roundedHours = Math.ceil(estimatedHours*2)/2;
     if(roundedHours<2) roundedHours=2;
 
     let costHours = roundedHours*rate;
@@ -158,7 +158,7 @@ function calculateQuote(){
     let breakdown=
       "Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
       "Hours charged (rounded): "+roundedHours+"\n"+
-      "After reserved hours, any extra time will be charged at half-hour increments at the rate selected.\n\n"+
+      "After reserved hours, any extra time will be charged per 30-minute increment at the selected rate.\n\n"+
       "Cost hours: £"+costHours.toFixed(2)+"\n"+
       "Miles: "+miles.toFixed(2)+"\n"+
       "Cost miles: £"+costMiles.toFixed(2)+"\n\n"+
