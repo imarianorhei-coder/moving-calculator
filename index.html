@@ -2,35 +2,25 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Fast Any Moves | Instant Moving Quote</title>
+<title>FAST ANY MOVES LTD | Instant Moving Quote</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-body{font-family:Arial;margin:0;background:#f4f6f9}
-.container{max-width:900px;margin:40px auto;background:#fff;padding:35px;border-radius:12px;box-shadow:0 8px 25px rgba(0,0,0,0.08)}
-h1{text-align:center;color:#0b3d91;margin-bottom:5px}
-h2{text-align:center;font-weight:normal;color:#555;margin-top:0;margin-bottom:30px}
-.company{text-align:center;font-size:22px;font-weight:bold;color:#0b3d91;margin-bottom:10px}
+body{font-family:Arial;background:#f4f6f9;margin:0}
+.container{max-width:750px;margin:40px auto;background:#fff;padding:30px;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.08)}
+h1{text-align:center;margin-bottom:10px}
+h2{text-align:center;margin-bottom:20px;font-weight:normal;color:#555;font-size:18px}
 label{font-weight:bold;display:block;margin-top:15px}
 input,select,textarea{width:100%;padding:10px;margin-top:5px;border-radius:6px;border:1px solid #ccc}
-button{width:100%;padding:14px;margin-top:25px;background:#0b3d91;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer}
-button:hover{background:#072c66}
-.whatsapp{background:#25D366;margin-top:10px}
-.whatsapp:hover{background:#1da851}
-.result{margin-top:30px;padding:25px;background:#eef3ff;border-radius:10px}
-.total{font-size:20px;font-weight:bold;color:#0b3d91}
-hr{margin:25px 0}
-.address-block{background:#f9fbff;padding:15px;border-radius:8px;margin-top:10px}
+button{width:100%;padding:15px;margin-top:20px;background:#007bff;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer}
+button:hover{background:#0056b3}
+.result{margin-top:25px;padding:20px;background:#eef5ff;border-radius:8px}
 </style>
 </head>
-
 <body>
 
 <div class="container">
-
-<div class="company">FAST ANY MOVES LTD</div>
-<h1>Instant Moving Quote</h1>
-<h2>Help us serve you better</h2>
+<h1>FAST ANY MOVES LTD</h1>
+<h2>Instant Moving Quote<br>Help us serve you better</h2>
 
 <form id="quoteForm">
 
@@ -55,20 +45,11 @@ hr{margin:25px 0}
 <option value="90">3 Men + Medium Van</option>
 </select>
 
-<hr>
-
-<h3>Collection Address *</h3>
-<div class="address-block">
-<label>House Number / Name *</label>
-<input type="text" id="c_house" required>
-<label>Street *</label>
-<input type="text" id="c_street" required>
-<label>Postcode *</label>
-<input type="text" id="c_postcode" required>
-<label>City *</label>
-<input type="text" id="c_city" required>
-</div>
-
+<!-- Collection Address -->
+<label>Collection Address *</label>
+<input type="text" id="collection_postcode" placeholder="Enter postcode / number" required>
+<input type="text" id="collection_street" placeholder="Street" readonly required>
+<input type="text" id="collection_city" placeholder="City" readonly required>
 <label>Collection Stairs</label>
 <select id="stairsCollection">
 <option value="0">Ground floor / Lift</option>
@@ -78,34 +59,25 @@ hr{margin:25px 0}
 <option value="4">4 Flights</option>
 </select>
 
-<hr>
+<!-- Via Address -->
+<label>Via Address (optional)</label>
+<input type="text" id="via_postcode" placeholder="Enter postcode / number">
+<input type="text" id="via_street" placeholder="Street" readonly>
+<input type="text" id="via_city" placeholder="City" readonly>
+<label>Via Stairs</label>
+<select id="stairsVia">
+<option value="0">Ground floor / Lift</option>
+<option value="1">1 Flight</option>
+<option value="2">2 Flights</option>
+<option value="3">3 Flights</option>
+<option value="4">4 Flights</option>
+</select>
 
-<h3>Via Address (optional)</h3>
-<div class="address-block">
-<label>House Number / Name</label>
-<input type="text" id="v_house">
-<label>Street</label>
-<input type="text" id="v_street">
-<label>Postcode</label>
-<input type="text" id="v_postcode">
-<label>City</label>
-<input type="text" id="v_city">
-</div>
-
-<hr>
-
-<h3>Delivery Address *</h3>
-<div class="address-block">
-<label>House Number / Name *</label>
-<input type="text" id="d_house" required>
-<label>Street *</label>
-<input type="text" id="d_street" required>
-<label>Postcode *</label>
-<input type="text" id="d_postcode" required>
-<label>City *</label>
-<input type="text" id="d_city" required>
-</div>
-
+<!-- Delivery Address -->
+<label>Delivery Address *</label>
+<input type="text" id="delivery_postcode" placeholder="Enter postcode / number" required>
+<input type="text" id="delivery_street" placeholder="Street" readonly required>
+<input type="text" id="delivery_city" placeholder="City" readonly required>
 <label>Delivery Stairs</label>
 <select id="stairsDelivery">
 <option value="0">Ground floor / Lift</option>
@@ -119,128 +91,124 @@ hr{margin:25px 0}
 <textarea id="info"></textarea>
 
 <button type="submit">Get My Instant Quote</button>
+<button type="button" onclick="sendWhatsApp()" style="background:#25D366">Send via WhatsApp</button>
 
 </form>
 
 <div id="result" class="result"></div>
-
 </div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac"></script>
+<!-- GOOGLE MAPS API -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
+
+<!-- EMAILJS -->
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 
 <script>
+emailjs.init("YOUR_EMAILJS_PUBLIC_KEY");
 
+// Min date for move
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
-document.getElementById("quoteForm").addEventListener("submit", function(e){
-e.preventDefault();
-calculateQuote();
-});
-
-function buildAddress(prefix){
-return document.getElementById(prefix+"_house").value + ", " +
-document.getElementById(prefix+"_street").value + ", " +
-document.getElementById(prefix+"_postcode").value + ", " +
-document.getElementById(prefix+"_city").value;
+// Autocomplete only for postcode fields
+function setupAutocomplete(input, streetField, cityField){
+    input.addEventListener("blur", function(){
+        let value = input.value;
+        if(!value) return;
+        // Simple geocode using Maps API
+        let geocoder = new google.maps.Geocoder();
+        geocoder.geocode({address: value}, function(results, status){
+            if(status === "OK" && results[0]){
+                let components = results[0].address_components;
+                streetField.value = results[0].formatted_address.split(",")[0];
+                cityField.value = components.find(c=>c.types.includes("locality"))?.long_name || "";
+            }
+        });
+    });
 }
+
+// Setup autocompletes
+setupAutocomplete(document.getElementById("collection_postcode"), document.getElementById("collection_street"), document.getElementById("collection_city"));
+setupAutocomplete(document.getElementById("via_postcode"), document.getElementById("via_street"), document.getElementById("via_city"));
+setupAutocomplete(document.getElementById("delivery_postcode"), document.getElementById("delivery_street"), document.getElementById("delivery_city"));
+
+// Handle form
+document.getElementById("quoteForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    calculateQuote();
+});
 
 function calculateQuote(){
+    let rate = parseFloat(document.getElementById("service").value);
+    let stairsCollection = parseInt(document.getElementById("stairsCollection").value);
+    let stairsVia = parseInt(document.getElementById("stairsVia").value);
+    let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
+    let stairsTotal = stairsCollection + stairsVia + stairsDelivery;
 
-let rate = parseFloat(document.getElementById("service").value);
-let serviceText = document.getElementById("service").options[document.getElementById("service").selectedIndex].text;
+    // Addresses
+    let collection = document.getElementById("collection_street").value + ", " + document.getElementById("collection_city").value;
+    let via = document.getElementById("via_street").value + ", " + document.getElementById("via_city").value;
+    let delivery = document.getElementById("delivery_street").value + ", " + document.getElementById("delivery_city").value;
 
-let collection = buildAddress("c");
-let delivery = buildAddress("d");
+    let service = new google.maps.DistanceMatrixService();
+    let destinations = via ? [via, delivery] : [delivery];
 
-let viaFilled = document.getElementById("v_house").value.trim() !== "";
-let via = viaFilled ? buildAddress("v") : null;
+    service.getDistanceMatrix({origins:[collection], destinations:destinations, travelMode: google.maps.TravelMode.DRIVING}, function(response,status){
+        if(status!=="OK"){ alert("Distance calculation error"); return; }
+        let totalMeters=0, totalSeconds=0;
+        response.rows[0].elements.forEach(el=>{ totalMeters+=el.distance.value; totalSeconds+=el.duration.value; });
+        let miles = totalMeters/1609.34;
+        let costMiles = miles*1.5;
 
-let stairsTotal =
-parseInt(document.getElementById("stairsCollection").value) +
-parseInt(document.getElementById("stairsDelivery").value);
+        let loadingTime = 30*60; // 30 min
+        let stairsTime = stairsTotal*10*60;
+        let estimatedSeconds = totalSeconds + loadingTime + stairsTime;
 
-let service = new google.maps.DistanceMatrixService();
+        let finalHours = Math.floor(estimatedSeconds/3600);
+        let finalMinutes = Math.round((estimatedSeconds%3600)/60);
+        if(finalMinutes==60){ finalHours++; finalMinutes=0; }
 
-function segment(origin,destination,callback){
-service.getDistanceMatrix({
-origins:[origin],
-destinations:[destination],
-travelMode: google.maps.TravelMode.DRIVING
-}, function(response,status){
-if(status!=="OK"){alert("Distance error");return;}
-callback(
-response.rows[0].elements[0].distance.value,
-response.rows[0].elements[0].duration.value
-);
-});
+        let costHours = finalHours * rate;
+        let costStairs = (rate!==45)? stairsTotal*10 : 0;
+        let total = costHours+costMiles+costStairs;
+
+        let breakdown = 
+`Estimated working time: ${finalHours}h ${finalMinutes}m
+Hours charged: ${finalHours}
+Cost hours: £${costHours.toFixed(2)}
+Miles: ${miles.toFixed(2)}
+Cost miles: £${costMiles.toFixed(2)}
+Collection Stairs: ${stairsCollection}
+Via Stairs: ${stairsVia}
+Delivery Stairs: ${stairsDelivery}
+Total flights: ${stairsTotal}
+Cost stairs: £${costStairs.toFixed(2)}
+TOTAL: £${total.toFixed(2)}`;
+
+        document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
+
+        // Send WhatsApp
+        //sendWhatsApp(breakdown);
+
+        // Send email
+        emailjs.send("service_1e9jyk9","template_0tbv6y9",{
+            name: document.getElementById("name").value,
+            phone: document.getElementById("phone").value,
+            email: document.getElementById("email").value,
+            move_date: document.getElementById("moveDate").value,
+            collection: collection,
+            via: via,
+            delivery: delivery,
+            quote_breakdown: breakdown
+        });
+    });
 }
 
-if(via){
-segment(collection,via,function(m1,s1){
-segment(via,delivery,function(m2,s2){
-process(m1+m2,s1+s2);
-});
-});
-}else{
-segment(collection,delivery,function(m,s){
-process(m,s);
-});
+function sendWhatsApp(){
+    let text = document.getElementById("result").innerText;
+    if(!text){ alert("Please calculate first"); return; }
+    window.open("https://wa.me/447846769519?text="+encodeURIComponent(text),"_blank");
 }
-
-function process(totalMeters,totalSeconds){
-
-let miles=totalMeters/1609.34;
-let costMiles=miles*1.5;
-
-let loading=45*60;
-let stairsTime=stairsTotal*10*60;
-
-let estimatedSeconds=totalSeconds+loading+stairsTime;
-let roundedHours=Math.ceil(estimatedSeconds/3600);
-if(roundedHours<2) roundedHours=2;
-
-let costHours=roundedHours*rate;
-let costStairs=rate===45?0:stairsTotal*10;
-let total=costHours+costMiles+costStairs;
-
-let finalHours=Math.floor(estimatedSeconds/3600);
-let finalMinutes=Math.round((estimatedSeconds%3600)/60);
-if(finalMinutes==60){finalHours++;finalMinutes=0;}
-
-let message =
-"🚚 Instant Moving Quote\n\n" +
-"Name: "+document.getElementById("name").value+"\n" +
-"Phone: "+document.getElementById("phone").value+"\n" +
-"Email: "+document.getElementById("email").value+"\n\n" +
-"Service: "+serviceText+"\n\n" +
-"Collection: "+collection+"\n" +
-(via ? "Via: "+via+"\n" : "") +
-"Delivery: "+delivery+"\n\n" +
-"Estimated working time: "+finalHours+"h "+finalMinutes+"m\n" +
-"Hours charged: "+roundedHours+"\n\n" +
-"Cost hours: £"+costHours.toFixed(2)+"\n" +
-"Miles: "+miles.toFixed(2)+"\n" +
-"Cost miles: £"+costMiles.toFixed(2)+"\n" +
-"Total flights: "+stairsTotal+"\n" +
-"Cost stairs: £"+costStairs.toFixed(2)+"\n\n" +
-"TOTAL: £"+total.toFixed(2);
-
-document.getElementById("result").innerHTML =
-"<b>Estimated working time:</b> "+finalHours+"h "+finalMinutes+"m<br>"+
-"<b>Hours charged:</b> "+roundedHours+"<br><br>"+
-"<b>Cost hours:</b> £"+costHours.toFixed(2)+"<br>"+
-"<b>Miles:</b> "+miles.toFixed(2)+"<br>"+
-"<b>Cost miles:</b> £"+costMiles.toFixed(2)+"<br>"+
-"<b>Total flights:</b> "+stairsTotal+"<br>"+
-"<b>Cost stairs:</b> £"+costStairs.toFixed(2)+"<br><br>"+
-"<div class='total'>TOTAL: £"+total.toFixed(2)+"</div>"+
-"<button class='whatsapp' onclick=\"window.open('https://wa.me/447846769519?text='+encodeURIComponent(`"+message+"`),'_blank')\">Send via WhatsApp</button>";
-
-}
-
-}
-
 </script>
-
 </body>
 </html>
