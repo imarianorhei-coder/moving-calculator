@@ -14,11 +14,11 @@ input, select, textarea { width:100%; padding:12px; margin-top:5px; border-radiu
 textarea { resize:vertical; }
 button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px; font-size:16px; font-weight:600; cursor:pointer; transition:0.3s; }
 #quoteBtn { background:#0B1F3A; color:#fff; }
-#quoteBtn:hover { background:#093153; }
+#quoteBtn:hover { background:#09406A; }
 #whatsappBtn { background:#25D366; color:#fff; }
 #whatsappBtn:hover { background:#1DA851; }
-#emailBtn { background:#1E90FF; color:#fff; margin-top:10px; }
-#emailBtn:hover { background:#187bcd; }
+#emailBtn { background:#007bff; color:#fff; }
+#emailBtn:hover { background:#0056b3; }
 .result { margin-top:25px; padding:20px; background:#eef5ff; border-radius:8px; font-size:14px; white-space:pre-line; line-height:1.5; color:#0B1F3A; }
 </style>
 </head>
@@ -89,7 +89,7 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 
   <button type="submit" id="quoteBtn">Get My Instant Quote</button>
   <button type="button" id="whatsappBtn" onclick="sendWhatsApp()">Send via WhatsApp</button>
-  <button type="button" id="emailBtn" onclick="sendEmail()">Send via E-mail</button>
+  <button type="button" id="emailBtn" onclick="sendEmail()">Send via Email</button>
 </form>
 
 <div id="result" class="result"></div>
@@ -101,10 +101,11 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <!-- EMAILJS -->
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
-emailjs.init("UTKviVTwg9BJjYixe"); // public key EmailJS
+emailjs.init("UTKviVTwg9BJjYixe"); // public key
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
+// Autocomplete adrese
 window.onload = function(){
   new google.maps.places.Autocomplete(document.getElementById('collection'));
   new google.maps.places.Autocomplete(document.getElementById('via'));
@@ -114,6 +115,8 @@ window.onload = function(){
 document.getElementById("quoteForm").addEventListener("submit", function(e){
   e.preventDefault(); calculateQuote();
 });
+
+let breakdownGlobal = ""; // stocare pentru WhatsApp și email
 
 function calculateQuote(){
   let rate=parseFloat(document.getElementById("service").value);
@@ -148,6 +151,7 @@ function calculateQuote(){
     let stairsTime=stairsTotal*10*60;
     let estimatedSeconds=totalSeconds+loadingTime+stairsTime;
 
+    // Rotunjire la fiecare 30 de minute
     let estimatedHours = estimatedSeconds/3600;
     let roundedHours = Math.ceil(estimatedHours*2)/2; // round up to nearest 0.5 hour
     if(roundedHours<2) roundedHours=2;
@@ -160,105 +164,85 @@ function calculateQuote(){
     let finalMinutes=Math.round((estimatedSeconds%3600)/60);
     if(finalMinutes===60){ finalHours++; finalMinutes=0; }
 
-    let breakdown=
-      "Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
-      "Hours charged (rounded): "+roundedHours+"\n"+
-      "After reserved hours, any extra time will be charged at half-hour increments at the rate selected.\n\n"+
-      "Cost hours: £"+costHours.toFixed(2)+"\n"+
-      "Miles: "+miles.toFixed(2)+"\n"+
-      "Cost miles: £"+costMiles.toFixed(2)+"\n\n"+
-      "Collection Stairs: "+stairsCollection+"\n"+
-      "Via Stairs: "+stairsVia+"\n"+
-      "Delivery Stairs: "+stairsDelivery+"\n"+
-      "Total flights: "+stairsTotal+"\n"+
-      "Cost stairs: £"+costStairs.toFixed(2)+"\n\n"+
-      "TOTAL: £"+total.toFixed(2);
+    // Format UK dd/mm/yyyy hh:mm
+    let rawDate = document.getElementById("moveDate").value;
+    let dateObj = new Date(rawDate);
+    let formattedDate = dateObj.toLocaleString('en-GB', {
+      day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', hour12:false
+    });
 
-    document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
+    breakdownGlobal=
+      `Estimated working time: ${finalHours}h ${finalMinutes}m
+Hours charged (rounded): ${roundedHours}
+After reserved hours, any extra time will be charged at half-hour increments at the rate selected.
+
+Cost hours: £${costHours.toFixed(2)}
+Miles: ${miles.toFixed(2)}
+Cost miles: £${costMiles.toFixed(2)}
+
+Collection Stairs: ${stairsCollection}
+Via Stairs: ${stairsVia}
+Delivery Stairs: ${stairsDelivery}
+Total flights: ${stairsTotal}
+Cost stairs: £${costStairs.toFixed(2)}
+
+TOTAL: £${total.toFixed(2)}`;
+
+    document.getElementById("result").innerHTML = breakdownGlobal.replace(/\n/g,"<br>");
   });
 }
 
 // WhatsApp
 function sendWhatsApp(){
-  let name=document.getElementById("name").value;
-  let phone=document.getElementById("phone").value;
-  let email=document.getElementById("email").value;
-  let moveDate=document.getElementById("moveDate").value;
-  let service=document.getElementById("service").options[document.getElementById("service").selectedIndex].text;
-  let collection=document.getElementById("collection").value;
-  let via=document.getElementById("via").value;
-  let delivery=document.getElementById("delivery").value;
-  let stairsCollection=document.getElementById("stairsCollection").value;
-  let stairsVia=document.getElementById("stairsVia").value;
-  let stairsDelivery=document.getElementById("stairsDelivery").value;
-  let info=document.getElementById("info").value;
-  let quote=document.getElementById("result").innerText;
+  if(!breakdownGlobal){ alert("Please calculate first"); return; }
+  let fullMessage=`Fast Any Moves Ltd – Instant Moving Quote
 
-  let fullMessage =
-`Fast Any Moves Ltd – Instant Moving Quote
+Name: ${document.getElementById("name").value}
+Phone: ${document.getElementById("phone").value}
+Email: ${document.getElementById("email").value}
+Move Date: ${document.getElementById("moveDate").value}
+Service: ${document.getElementById("service").options[document.getElementById("service").selectedIndex].text}
 
-Name: ${name}
-Phone: ${phone}
-Email: ${email}
-Move Date: ${moveDate}
-Service: ${service}
-
-Collection: ${collection} (Stairs: ${stairsCollection})
-Via: ${via} (Stairs: ${stairsVia})
-Delivery: ${delivery} (Stairs: ${stairsDelivery})
+Collection: ${document.getElementById("collection").value}
+Collection Stairs: ${document.getElementById("stairsCollection").value}
+Via: ${document.getElementById("via").value}
+Via Stairs: ${document.getElementById("stairsVia").value}
+Delivery: ${document.getElementById("delivery").value}
+Delivery Stairs: ${document.getElementById("stairsDelivery").value}
 
 Additional Information:
-${info}
+${document.getElementById("info").value}
 
 Quote Details:
-${quote}`;
+${breakdownGlobal}`;
 
-  if(!quote){ alert("Please calculate first"); return; }
   window.open("https://wa.me/447846769519?text="+encodeURIComponent(fullMessage),"_blank");
 }
 
-// EmailJS send
+// EmailJS
 function sendEmail(){
-  let name=document.getElementById("name").value;
-  let phone=document.getElementById("phone").value;
-  let email=document.getElementById("email").value;
-  let moveDate=document.getElementById("moveDate").value;
-  let service=document.getElementById("service").options[document.getElementById("service").selectedIndex].text;
-  let collection=document.getElementById("collection").value;
-  let via=document.getElementById("via").value;
-  let delivery=document.getElementById("delivery").value;
-  let stairsCollection=document.getElementById("stairsCollection").value;
-  let stairsVia=document.getElementById("stairsVia").value;
-  let stairsDelivery=document.getElementById("stairsDelivery").value;
-  let info=document.getElementById("info").value;
-  let quote_breakdown=document.getElementById("result").innerText;
+  if(!breakdownGlobal){ alert("Please calculate first"); return; }
 
-  if(!quote_breakdown){ alert("Please calculate first"); return; }
+  let templateParams={
+    name: document.getElementById("name").value,
+    phone: document.getElementById("phone").value,
+    email: document.getElementById("email").value,
+    move_date: document.getElementById("moveDate").value,
+    service: document.getElementById("service").options[document.getElementById("service").selectedIndex].text,
+    collection: document.getElementById("collection").value,
+    stairs_collection: document.getElementById("stairsCollection").value,
+    via: document.getElementById("via").value,
+    stairs_via: document.getElementById("stairsVia").value,
+    delivery: document.getElementById("delivery").value,
+    stairs_delivery: document.getElementById("stairsDelivery").value,
+    info: document.getElementById("info").value,
+    quote_breakdown: breakdownGlobal
+  };
 
-  emailjs.send(
-    "service_1e9jyk9",
-    "template_0tbv6y9",
-    {
-      name:name,
-      phone:phone,
-      email:email,
-      move_date:moveDate,
-      service:service,
-      collection:collection,
-      stairsCollection:stairsCollection,
-      via:via,
-      stairsVia:stairsVia,
-      delivery:delivery,
-      stairsDelivery:stairsDelivery,
-      info:info,
-      quote_breakdown:quote_breakdown
-    }
-  ).then(function(response){
-    alert("E-mail sent successfully!");
-  }, function(error){
-    alert("Error sending e-mail: "+JSON.stringify(error));
-  });
+  emailjs.send("service_1e9jyk9","template_0tbv6y9",templateParams)
+  .then(function(){ alert("Email sent successfully"); }, function(err){ alert("Email could not be sent: "+JSON.stringify(err)); });
 }
 </script>
+
 </body>
 </html>
