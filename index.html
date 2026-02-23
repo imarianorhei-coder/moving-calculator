@@ -2,36 +2,28 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Fast Any Moves Ltd | Instant Moving Quote</title>
+<title>Instant Moving Quote</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-body {font-family: Arial, sans-serif; background: #f4f6f9; margin: 0;}
-.container {max-width: 750px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.08);}
-.logo {text-align: center; margin-bottom: 15px;}
-.logo img {max-width: 200px;}
-h1 {text-align: center; margin-bottom: 5px;}
-h2 {text-align: center; margin-top: 0; font-weight: normal; color: #555;}
-label {font-weight: bold; display: block; margin-top: 15px;}
-input, select, textarea, button {width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box;}
-button {background: #007bff; color: #fff; border: none; font-size: 16px; cursor: pointer; margin-top: 20px;}
-button:hover {background: #0056b3;}
-.result {margin-top: 25px; padding: 20px; background: #eef5ff; border-radius: 8px; white-space: pre-wrap;}
+body { font-family: Arial, sans-serif; background: #f4f6f9; margin:0; }
+.container { max-width: 750px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); }
+h1 { text-align:center; margin-bottom:5px; }
+h2 { text-align:center; font-weight:normal; margin-bottom:20px; color:#555; }
+label { font-weight:bold; display:block; margin-top:15px; }
+input, select, textarea { width:100%; padding:10px; margin-top:5px; border-radius:6px; border:1px solid #ccc; }
+button { width:100%; padding:15px; margin-top:20px; background:#007bff; color:#fff; border:none; border-radius:6px; font-size:16px; cursor:pointer; }
+button:hover { background:#0056b3; }
+.result { margin-top:25px; padding:20px; background:#eef5ff; border-radius:8px; white-space: pre-line; }
 </style>
 </head>
-
 <body>
 
 <div class="container">
-  <div class="logo">
-    <img src="YOUR_LOGO_URL_HERE" alt="Fast Any Moves Ltd Logo">
-  </div>
-
-  <h1>Instant Moving Quote</h1>
-  <h2>Help us serve you better</h2>
+  <!-- NUMELE COMPANIEI SUS -->
+  <h1>Fast Any Moves Ltd</h1>
+  <h2>Instant Moving Quote – Help us serve you better</h2>
 
   <form id="quoteForm">
-
     <label>Name *</label>
     <input type="text" id="name" required>
 
@@ -53,8 +45,9 @@ button:hover {background: #0056b3;}
       <option value="90">3 Men + Medium Van</option>
     </select>
 
+    <!-- COLLECTION -->
     <label>Collection Address *</label>
-    <input type="text" id="collection" placeholder="Enter post code" required>
+    <input type="text" id="collection" placeholder="Postcode" required>
     <label>Collection Stairs</label>
     <select id="stairsCollection">
       <option value="0">Ground floor / Lift</option>
@@ -64,8 +57,9 @@ button:hover {background: #0056b3;}
       <option value="4">4 Flights</option>
     </select>
 
+    <!-- VIA -->
     <label>Via Address (optional)</label>
-    <input type="text" id="via" placeholder="Enter post code">
+    <input type="text" id="via" placeholder="Postcode">
     <label>Via Stairs</label>
     <select id="stairsVia">
       <option value="0">Ground floor / Lift</option>
@@ -75,8 +69,9 @@ button:hover {background: #0056b3;}
       <option value="4">4 Flights</option>
     </select>
 
+    <!-- DELIVERY -->
     <label>Delivery Address *</label>
-    <input type="text" id="delivery" placeholder="Enter post code" required>
+    <input type="text" id="delivery" placeholder="Postcode" required>
     <label>Delivery Stairs</label>
     <select id="stairsDelivery">
       <option value="0">Ground floor / Lift</option>
@@ -96,14 +91,15 @@ button:hover {background: #0056b3;}
   <div id="result" class="result"></div>
 </div>
 
-<!-- Google Maps API -->
+<!-- GOOGLE MAPS API -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
 
 <script>
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
-window.onload = function() {
-  newgoogle.maps.places.Autocomplete(document.getElementById('collection'));
+// Autocomplete pentru toate adresele
+window.onload = function(){
+  new google.maps.places.Autocomplete(document.getElementById('collection'));
   new google.maps.places.Autocomplete(document.getElementById('via'));
   new google.maps.places.Autocomplete(document.getElementById('delivery'));
 };
@@ -113,7 +109,7 @@ document.getElementById("quoteForm").addEventListener("submit", function(e){
   calculateQuote();
 });
 
-function calculateQuote() {
+function calculateQuote(){
   let rate = parseFloat(document.getElementById("service").value);
   let stairsCollection = parseInt(document.getElementById("stairsCollection").value);
   let stairsVia = parseInt(document.getElementById("stairsVia").value);
@@ -128,64 +124,61 @@ function calculateQuote() {
   let destinations = via ? [via, delivery] : [delivery];
 
   service.getDistanceMatrix({
-    origins: [collection],
-    destinations: destinations,
+    origins:[collection],
+    destinations:destinations,
     travelMode: google.maps.TravelMode.DRIVING
-  }, function(response, status){
-    if(status !== "OK"){ alert("Distance calculation error"); return; }
+  }, function(response,status){
+    if(status!=="OK"){ alert("Distance calculation error"); return; }
 
-    let totalMeters = 0;
-    let totalSeconds = 0;
+    let totalMeters=0;
+    let totalSeconds=0;
+
     response.rows[0].elements.forEach(el=>{
-      totalMeters += el.distance.value;
-      totalSeconds += el.duration.value;
+      totalMeters+=el.distance.value;
+      totalSeconds+=el.duration.value;
     });
 
     let miles = totalMeters/1609.34;
     let costMiles = miles*1.5;
-
     let loadingTime = 30*60;
     let stairsTime = stairsTotal*10*60;
-    let estimatedSeconds = totalSeconds + loadingTime + stairsTime;
+    let estimatedSeconds = totalSeconds+loadingTime+stairsTime;
 
-    let estimatedHours = estimatedSeconds / 3600;
+    let estimatedHours = estimatedSeconds/3600;
     let roundedHours = Math.ceil(estimatedHours);
     if(roundedHours < 2) roundedHours = 2;
-    let costHours = roundedHours*rate;
 
-    let costStairs = rate !== 45 ? stairsTotal*10 : 0;
-    let total = costHours + costMiles + costStairs;
+    let costHours = roundedHours*rate;
+    let costStairs = rate!==45 ? stairsTotal*10 : 0;
+    let total = costHours+costMiles+costStairs;
 
     let finalHours = Math.floor(estimatedSeconds/3600);
-    let finalMinutes = Math.round((estimatedSeconds % 3600)/60);
-    if(finalMinutes === 60){ finalHours++; finalMinutes=0; }
+    let finalMinutes = Math.round((estimatedSeconds%3600)/60);
+    if(finalMinutes===60){ finalHours++; finalMinutes=0; }
 
     let breakdown =
-`Estimated working time: ${finalHours}h ${finalMinutes}m
-Hours charged (rounded): ${roundedHours}
+      "Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
+      "Hours charged (rounded): "+roundedHours+"\n\n"+
+      "Cost hours: £"+costHours.toFixed(2)+"\n"+
+      "Miles: "+miles.toFixed(2)+"\n"+
+      "Cost miles: £"+costMiles.toFixed(2)+"\n\n"+
+      "Collection Stairs: "+stairsCollection+"\n"+
+      "Via Stairs: "+stairsVia+"\n"+
+      "Delivery Stairs: "+stairsDelivery+"\n"+
+      "Total flights: "+stairsTotal+"\n"+
+      "Cost stairs: £"+costStairs.toFixed(2)+"\n\n"+
+      "TOTAL: £"+total.toFixed(2);
 
-Cost hours: £${costHours.toFixed(2)}
-Miles: ${miles.toFixed(2)}
-Cost miles: £${costMiles.toFixed(2)}
-
-Collection Stairs: ${stairsCollection}
-Via Stairs: ${stairsVia}
-Delivery Stairs: ${stairsDelivery}
-Total flights: ${stairsTotal}
-Cost stairs: £${costStairs.toFixed(2)}
-
-TOTAL: £${total.toFixed(2)}`;
-
-    document.getElementById("result").innerText = breakdown;
+    document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
   });
 }
 
-function sendWhatsApp() {
-  let text = document.getElementById("result").innerText;
-  if(!text) { alert("Please calculate first"); return; }
-  window.open("https://wa.me/447846769519?text="+encodeURIComponent(text), "_blank");
+// WhatsApp
+function sendWhatsApp(){
+  let text=document.getElementById("result").innerText;
+  if(!text){alert("Please calculate first"); return;}
+  window.open("https://wa.me/447846769519?text="+encodeURIComponent(text),"_blank");
 }
 </script>
-
 </body>
 </html>
