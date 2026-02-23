@@ -13,7 +13,7 @@ label { font-weight:600; display:block; margin-top:15px; color:#333; }
 input, select, textarea { width:100%; padding:12px; margin-top:5px; border-radius:6px; border:1px solid #ccc; font-size:14px; }
 textarea { resize:vertical; }
 button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px; font-size:16px; font-weight:600; cursor:pointer; transition:0.3s; }
-#quoteBtn { background:#0B1F3A; color:#fff; } /* Albastru premium */
+#quoteBtn { background:#0B1F3A; color:#fff; } 
 #quoteBtn:hover { background:#094170; }
 #whatsappBtn { background:#25D366; color:#fff; }
 #whatsappBtn:hover { background:#1DA851; }
@@ -175,30 +175,24 @@ function calculateQuote(){
   });
 }
 
-// WhatsApp
+// WhatsApp complet
 function sendWhatsApp(){
-  let text=document.getElementById("result").innerText;
-  if(!text){ alert("Please calculate first"); return; }
-  window.open("https://wa.me/447846769519?text="+encodeURIComponent(text),"_blank");
-}
+  let name = document.getElementById("name").value;
+  let phone = document.getElementById("phone").value;
+  let email = document.getElementById("email").value;
+  let moveDate = document.getElementById("moveDate").value;
+  let service = document.getElementById("service").options[document.getElementById("service").selectedIndex].text;
+  let collection = document.getElementById("collection").value;
+  let via = document.getElementById("via").value;
+  let delivery = document.getElementById("delivery").value;
+  let stairsCollection = document.getElementById("stairsCollection").value;
+  let stairsVia = document.getElementById("stairsVia").value;
+  let stairsDelivery = document.getElementById("stairsDelivery").value;
+  let info = document.getElementById("info").value;
+  let quote = document.getElementById("result").innerText;
 
-// Email
-function sendEmail(){
-  let name=document.getElementById("name").value;
-  let phone=document.getElementById("phone").value;
-  let email=document.getElementById("email").value;
-  let moveDate=document.getElementById("moveDate").value;
-  let service=document.getElementById("service").options[document.getElementById("service").selectedIndex].text;
-  let collection=document.getElementById("collection").value;
-  let via=document.getElementById("via").value;
-  let delivery=document.getElementById("delivery").value;
-  let stairsCollection=document.getElementById("stairsCollection").value;
-  let stairsVia=document.getElementById("stairsVia").value;
-  let stairsDelivery=document.getElementById("stairsDelivery").value;
-  let info=document.getElementById("info").value;
-  let quote=document.getElementById("result").innerText;
+  if(!quote){ alert("Please calculate first"); return; }
 
-  // Formatare UK date/time
   let dateObj = new Date(moveDate);
   let formattedDate = dateObj.getDate().toString().padStart(2,'0') + "/" +
                       (dateObj.getMonth()+1).toString().padStart(2,'0') + "/" +
@@ -206,7 +200,7 @@ function sendEmail(){
                       dateObj.getHours().toString().padStart(2,'0') + ":" +
                       dateObj.getMinutes().toString().padStart(2,'0');
 
-  let fullMessage =
+  let fullMessage = 
 `Fast Any Moves Ltd – Instant Moving Quote
 
 Name: ${name}
@@ -228,7 +222,31 @@ ${info}
 Quote Details:
 ${quote}`;
 
-  if(!quote){ alert("Please calculate first"); return; }
+  window.open("https://wa.me/447846769519?text=" + encodeURIComponent(fullMessage), "_blank");
+}
+
+// Email
+function sendEmail(){
+  let name = document.getElementById("name").value;
+  let phone = document.getElementById("phone").value;
+  let email = document.getElementById("email").value;
+  let moveDate = document.getElementById("moveDate").value;
+  let service = document.getElementById("service").options[document.getElementById("service").selectedIndex].text;
+  let collection = document.getElementById("collection").value;
+  let via = document.getElementById("via").value;
+  let delivery = document.getElementById("delivery").value;
+  let stairsCollection = document.getElementById("stairsCollection").value;
+  let stairsVia = document.getElementById("stairsVia").value;
+  let stairsDelivery = document.getElementById("stairsDelivery").value;
+  let info = document.getElementById("info").value;
+  let quote = document.getElementById("result").innerText;
+
+  let dateObj = new Date(moveDate);
+  let formattedDate = dateObj.getDate().toString().padStart(2,'0') + "/" +
+                      (dateObj.getMonth()+1).toString().padStart(2,'0') + "/" +
+                      dateObj.getFullYear() + " " +
+                      dateObj.getHours().toString().padStart(2,'0') + ":" +
+                      dateObj.getMinutes().toString().padStart(2,'0');
 
   emailjs.send("service_1e9jyk9","template_0tbv6y9",{
     name: name,
