@@ -45,10 +45,10 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
   <label>Do you need help with loading and unloading? *</label>
   <select id="service" required>
     <option value="">Select</option>
-    <option value="45">No help required + Medium Van</option>
-    <option value="55">1 Man + Medium Van</option>
+    <option value="35">No help required + Medium Van</option>
+    <option value="40">1 Man + Medium Van</option>
     <option value="70">2 Men + Medium Van</option>
-    <option value="90">3 Men + Medium Van</option>
+    <option value="100">3 Men + Medium Van</option>
   </select>
 
   <label>Collection Address *</label>
@@ -95,10 +95,11 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <div id="result" class="result"></div>
 </div>
 
+<!-- Pui API KEY-ul tau Google Maps aici -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
-emailjs.init("UTKviVTwg9BJjYixe");
+emailjs.init("UTKviVTwg9BJjYixe"); // User ID EmailJS deja setat
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 window.onload = function(){
@@ -150,7 +151,7 @@ function calculateQuote(){
     if(roundedHours<2) roundedHours=2;
 
     let costHours = roundedHours*rate;
-    let costStairs = rate!==45? stairsTotal*10:0;
+    let costStairs = rate!==35? stairsTotal*10:0;
     let total = costHours+costMiles+costStairs;
 
     let finalHours = Math.floor(estimatedSeconds/3600);
@@ -175,7 +176,7 @@ function calculateQuote(){
   });
 }
 
-// WhatsApp complet
+// WhatsApp
 function sendWhatsApp(){
   let name = document.getElementById("name").value;
   let phone = document.getElementById("phone").value;
