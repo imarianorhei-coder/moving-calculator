@@ -95,7 +95,7 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <div id="result" class="result"></div>
 </div>
 
-<!-- Pui API KEY-ul tau Google Maps aici -->
+<!-- PUI API KEY-ul tau Google Maps aici -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
@@ -120,6 +120,9 @@ function calculateQuote(){
   let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
   let stairsTotal = stairsCollection + stairsVia + stairsDelivery;
 
+  let numMen = (rate===40 ? 1 : rate===70 ? 2 : rate===100 ? 3 : 0);
+  let costStairs = rate!==35 ? stairsTotal * 10 * numMen : 0;
+
   let collection = document.getElementById("collection").value;
   let via = document.getElementById("via").value;
   let delivery = document.getElementById("delivery").value;
@@ -143,15 +146,12 @@ function calculateQuote(){
     let miles = totalMeters/1609.34;
     let costMiles = miles*1.5;
     let loadingTime=30*60;
-    let stairsTime=stairsTotal*10*60;
-    let estimatedSeconds=totalSeconds+loadingTime+stairsTime;
-
+    let estimatedSeconds=totalSeconds+loadingTime+stairsTotal*10*60; // doar timp estimativ pentru scări
     let estimatedHours = estimatedSeconds/3600;
     let roundedHours = Math.ceil(estimatedHours*2)/2;
     if(roundedHours<2) roundedHours=2;
 
     let costHours = roundedHours*rate;
-    let costStairs = rate!==35? stairsTotal*10:0;
     let total = costHours+costMiles+costStairs;
 
     let finalHours = Math.floor(estimatedSeconds/3600);
