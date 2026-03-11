@@ -64,7 +64,6 @@ cursor:pointer;
 }
 
 #quoteBtn{background:#0B4DBA;color:white;}
-#bookBtn{background:#ff9800;color:white;}
 #whatsappBtn{background:#25D366;color:white;}
 #emailBtn{background:#007bff;color:white;}
 
@@ -75,12 +74,6 @@ background:#eef5ff;
 border-radius:8px;
 white-space:pre-line;
 line-height:1.5;
-}
-
-#map{
-height:300px;
-margin-top:20px;
-border-radius:10px;
 }
 
 </style>
@@ -98,16 +91,16 @@ border-radius:10px;
 <label>Name *</label>
 <input type="text" id="name" required>
 
-<label>Phone *</label>
-<input type="text" id="phone" required>
-
 <label>Email *</label>
 <input type="email" id="email" required>
 
-<label>Move Date *</label>
+<label>Phone *</label>
+<input type="text" id="phone" required>
+
+<label>Moving Date & Time *</label>
 <input type="datetime-local" id="moveDate" required>
 
-<label>Service *</label>
+<label>Do you need help with loading and unloading? *</label>
 <select id="service" required>
 <option value="">Select</option>
 <option value="35">No help required + Medium Van</option>
@@ -121,6 +114,18 @@ border-radius:10px;
 
 <label>Collection Stairs</label>
 <select id="stairsCollection">
+<option value="0">Ground floor / Lift</option>
+<option value="1">1 Flight</option>
+<option value="2">2 Flights</option>
+<option value="3">3 Flights</option>
+<option value="4">4 Flights</option>
+</select>
+
+<label>Via Address (optional)</label>
+<input type="text" id="via">
+
+<label>Via Stairs</label>
+<select id="stairsVia">
 <option value="0">Ground floor / Lift</option>
 <option value="1">1 Flight</option>
 <option value="2">2 Flights</option>
@@ -144,15 +149,12 @@ border-radius:10px;
 <textarea id="info"></textarea>
 
 <button type="submit" id="quoteBtn">Get My Instant Quote</button>
-<button type="button" id="bookBtn">Book This Move</button>
-<button type="button" id="whatsappBtn">Send via WhatsApp</button>
-<button type="button" id="emailBtn">Send via Email</button>
+<button type="button" id="whatsappBtn">Book via WhatsApp</button>
+<button type="button" id="emailBtn">Book via Email</button>
 
 </form>
 
 <div id="result" class="result"></div>
-
-<div id="map"></div>
 
 </div>
 
@@ -163,57 +165,55 @@ border-radius:10px;
 
 emailjs.init("UTKviVTwg9BJjYixe");
 
-let map;
-let directionsService;
-let directionsRenderer;
-
 window.onload=function(){
-
 new google.maps.places.Autocomplete(document.getElementById('collection'));
+new google.maps.places.Autocomplete(document.getElementById('via'));
 new google.maps.places.Autocomplete(document.getElementById('delivery'));
-
-map=new google.maps.Map(document.getElementById("map"),{
-zoom:7,
-center:{lat:51.5074,lng:-0.1278}
-});
-
-directionsService=new google.maps.DirectionsService();
-directionsRenderer=new google.maps.DirectionsRenderer();
-
-directionsRenderer.setMap(map);
-
 }
 
 document.getElementById("quoteForm").addEventListener("submit",function(e){
-
 e.preventDefault();
-
 calculateQuote();
-
 });
 
 function calculateQuote(){
 
+const collection=document.getElementById("collection").value;
+const delivery=document.getElementById("delivery").value;
+
+if(collection===delivery){
+alert("Collection and delivery address cannot be the same.");
+return;
+}
+
 let rate=parseFloat(document.getElementById("service").value);
 
 let stairsCollection=parseInt(document.getElementById("stairsCollection").value);
+let stairsVia=parseInt(document.getElementById("stairsVia").value);
 let stairsDelivery=parseInt(document.getElementById("stairsDelivery").value);
 
-let stairsTotal=stairsCollection+stairsDelivery;
+let stairsTotal=stairsCollection+stairsVia+stairsDelivery;
 
 let numMen=(rate===40?1:rate===70?2:rate===100?3:0);
 
 let costStairs=stairsTotal*10*numMen;
 
-const collection=document.getElementById("collection").value;
-const delivery=document.getElementById("delivery").value;
+const via=document.getElementById("via").value;
+
+const segments=via?
+[{origin:collection,destination:via},{origin:via,destination:delivery}]
+:[{origin:collection,destination:delivery}];
+
+let totalMeters=0,totalSeconds=0,processed=0;
+
+segments.forEach(segment=>{
 
 const serviceDM=new google.maps.DistanceMatrixService();
 
 serviceDM.getDistanceMatrix({
 
-origins:[collection],
-destinations:[delivery],
+origins:[segment.origin],
+destinations:[segment.destination],
 travelMode:google.maps.TravelMode.DRIVING
 
 },
@@ -222,26 +222,18 @@ function(response,status){
 
 if(status!=="OK"){alert("Distance error");return;}
 
-const meters=response.rows[0].elements[0].distance.value;
-const seconds=response.rows[0].elements[0].duration.value;
+totalMeters+=response.rows[0].elements[0].distance.value;
+totalSeconds+=response.rows[0].elements[0].duration.value;
 
-processDistance(meters,seconds);
+processed++;
 
-});
+if(processed===segments.length){
 
-directionsService.route({
-
-origin:collection,
-destination:delivery,
-travelMode:'DRIVING'
-
-},function(result,status){
-
-if(status==="OK"){
-
-directionsRenderer.setDirections(result);
+processDistance(totalMeters,totalSeconds);
 
 }
+
+});
 
 });
 
@@ -253,14 +245,9 @@ const costMiles=miles*1.5;
 
 let loadingTime=30*60;
 
-if(rate===35) loadingTime=40*60;
-if(rate===40) loadingTime=30*60;
-if(rate===70) loadingTime=20*60;
-if(rate===100) loadingTime=15*60;
-
 const stairsTime=stairsTotal*10*60;
 
-const estimatedSeconds=totalSeconds+loadingTime+stairsTime;
+let estimatedSeconds=totalSeconds+loadingTime+stairsTime;
 
 let estimatedHours=estimatedSeconds/3600;
 
@@ -273,49 +260,22 @@ const costHours=roundedHours*rate;
 let total=costHours+costMiles+costStairs;
 
 let congestion=0;
+let ulez=0;
 
-function inCongestionZone(lat,lng){
-
-return(
-
-lat>51.50 &&
-lat<51.53 &&
-lng>-0.15 &&
-lng<-0.07
-
-);
-
-}
-
-const geocoder=new google.maps.Geocoder();
-
-geocoder.geocode({address:collection},function(res,status){
-
-if(status==="OK"){
-
-const lat=res[0].geometry.location.lat();
-const lng=res[0].geometry.location.lng();
-
-if(inCongestionZone(lat,lng)){
-
+if(collection.includes("EC")||collection.includes("WC")||collection.includes("W1")||collection.includes("SW1")||
+delivery.includes("EC")||delivery.includes("WC")||delivery.includes("W1")||delivery.includes("SW1")){
 congestion=18;
 total+=18;
-
 }
 
+if(collection.includes("London")||delivery.includes("London")){
+ulez=12.5;
+total+=12.5;
 }
-
-showResult();
-
-});
-
-function showResult(){
 
 document.getElementById("result").innerHTML=
 
-`Estimated working time: ${Math.floor(estimatedSeconds/3600)}h ${Math.round((estimatedSeconds%3600)/60)}m
-
-Hours charged: ${roundedHours}
+`Estimated working time: ${roundedHours}h
 
 Distance: ${miles.toFixed(2)} miles
 
@@ -323,6 +283,7 @@ Cost hours: £${costHours.toFixed(2)}
 Cost miles: £${costMiles.toFixed(2)}
 Cost stairs: £${costStairs.toFixed(2)}
 Congestion charge: £${congestion}
+ULEZ charge: £${ulez}
 
 TOTAL: £${total.toFixed(2)}`;
 
@@ -330,14 +291,13 @@ TOTAL: £${total.toFixed(2)}`;
 
 }
 
-}
-
 document.getElementById("whatsappBtn").onclick=function(){
 
-let msg=`Fast Any Moves Quote
+let msg=`Fast Any Moves Booking
 
 Name: ${name.value}
 Phone: ${phone.value}
+Email: ${email.value}
 
 Collection: ${collection.value}
 Delivery: ${delivery.value}
@@ -348,19 +308,20 @@ window.open("https://wa.me/447846769519?text="+encodeURIComponent(msg));
 
 }
 
-document.getElementById("bookBtn").onclick=function(){
+document.getElementById("emailBtn").onclick=function(){
 
-let msg=`Booking Request – Fast Any Moves
+emailjs.send("service_1e9jyk9","template_0tbv6y9",{
 
-Name: ${name.value}
-Phone: ${phone.value}
+name:name.value,
+phone:phone.value,
+email:email.value,
+quote_breakdown:result.innerText
 
-Collection: ${collection.value}
-Delivery: ${delivery.value}
+}).then(()=>{
 
-${result.innerText}`;
+alert("Booking request sent successfully!");
 
-window.open("https://wa.me/447846769519?text="+encodeURIComponent(msg));
+});
 
 }
 
