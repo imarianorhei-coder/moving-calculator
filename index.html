@@ -96,14 +96,14 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 </div>
 
 <!-- Pui API KEY-ul tau Google Maps aici -->
-<script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
 emailjs.init("UTKviVTwg9BJjYixe");
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 window.onload = function(){
-  newgoogle.maps.places.Autocomplete(document.getElementById('collection'));
+  new google.maps.places.Autocomplete(document.getElementById('collection'));
   new google.maps.places.Autocomplete(document.getElementById('via'));
   new google.maps.places.Autocomplete(document.getElementById('delivery'));
 };
