@@ -12,6 +12,8 @@ h1{color:#0B1F3A;font-size:28px;margin-bottom:5px;}
 h2{font-weight:400;color:#3A3A3A;font-size:18px;margin-bottom:25px;}
 label{font-weight:600; display:block; margin-top:15px; color:#333;}
 input, select, textarea{width:100%; padding:12px; margin-top:5px; border-radius:6px; border:1px solid #ccc; font-size:14px;}
+input.error, select.error, textarea.error{border:2px solid red;}
+.message-error{color:red;font-size:12px;margin-top:2px;display:none;}
 textarea{resize:vertical;}
 button{width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px; font-size:16px; font-weight:600; cursor:pointer; transition:0.3s;}
 #quoteBtn{background:#0B1F3A;color:#fff;} 
@@ -24,16 +26,15 @@ button{width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px
 </style>
 </head>
 <body>
-
 <div class="container">
 <h1>Fast Any Moves Ltd</h1>
 <h2>Instant Moving Quote – Help us serve you better</h2>
 
 <form id="quoteForm">
-<label>Name *</label><input type="text" id="name" required>
-<label>Phone *</label><input type="text" id="phone" required>
-<label>Email *</label><input type="email" id="email" required>
-<label>Move Date *</label><input type="datetime-local" id="moveDate" required>
+<label>Name *</label><input type="text" id="name" required><div class="message-error" id="errorName">This field is required</div>
+<label>Phone *</label><input type="text" id="phone" required><div class="message-error" id="errorPhone">This field is required</div>
+<label>Email *</label><input type="email" id="email" required><div class="message-error" id="errorEmail">This field is required</div>
+<label>Move Date *</label><input type="datetime-local" id="moveDate" required><div class="message-error" id="errorDate">This field is required</div>
 
 <label>Service *</label>
 <select id="service" required>
@@ -42,15 +43,18 @@ button{width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px
 <option value="40">1 Man + Medium Van</option>
 <option value="70">2 Men + Medium Van</option>
 <option value="100">3 Men + Medium Van</option>
-</select>
+</select><div class="message-error" id="errorService">Please select a service</div>
 
-<label>Collection Address *</label><input type="text" id="collection" placeholder="Postcode or Address" required>
+<label>Collection Address *</label><input type="text" id="collection" placeholder="Start typing and select..." required>
+<div class="message-error" id="errorCollection">Please select a valid address</div>
 <label>Collection Stairs</label><select id="stairsCollection"><option value="0">Ground floor / Lift</option><option value="1">1 Flight</option><option value="2">2 Flights</option><option value="3">3 Flights</option><option value="4">4 Flights</option></select>
 
-<label>Via Address (optional)</label><input type="text" id="via" placeholder="Postcode or Address">
+<label>Via Address (optional)</label><input type="text" id="via" placeholder="Start typing and select...">
+<div class="message-error" id="errorVia">Invalid address</div>
 <label>Via Stairs</label><select id="stairsVia"><option value="0">Ground floor / Lift</option><option value="1">1 Flight</option><option value="2">2 Flights</option><option value="3">3 Flights</option><option value="4">4 Flights</option></select>
 
-<label>Delivery Address *</label><input type="text" id="delivery" placeholder="Postcode or Address" required>
+<label>Delivery Address *</label><input type="text" id="delivery" placeholder="Start typing and select..." required>
+<div class="message-error" id="errorDelivery">Please select a valid address</div>
 <label>Delivery Stairs</label><select id="stairsDelivery"><option value="0">Ground floor / Lift</option><option value="1">1 Flight</option><option value="2">2 Flights</option><option value="3">3 Flights</option><option value="4">4 Flights</option></select>
 
 <label>Additional Information</label><textarea id="info"></textarea>
@@ -65,67 +69,75 @@ button{width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-
 <script>
-// EmailJS – doar pui cheile tale
+// EmailJS init
 emailjs.init("UTKviVTwg9BJjYixe");
 const SERVICE_ID="service_1e9jyk9";
 const TEMPLATE_ID="template_0tbv6y9";
 
 let collectionAuto, viaAuto, deliveryAuto;
-window.onload = function(){
-  collectionAuto = new google.maps.places.Autocomplete(document.getElementById('collection'));
-  viaAuto = new google.maps.places.Autocomplete(document.getElementById('via'));
-  deliveryAuto = new google.maps.places.Autocomplete(document.getElementById('delivery'));
+window.onload=function(){
+collectionAuto=new google.maps.places.Autocomplete(document.getElementById('collection'));
+viaAuto=new google.maps.places.Autocomplete(document.getElementById('via'));
+deliveryAuto=new google.maps.places.Autocomplete(document.getElementById('delivery'));
 };
 
-document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
+document.getElementById("moveDate").min=new Date().toISOString().slice(0,16);
 let quoteCalculated=false;
 
-document.getElementById("quoteBtn").addEventListener("click", calculateQuote);
-document.getElementById("whatsappBtn").addEventListener("click", function(){
-    if(!quoteCalculated){ alert("Please calculate quote first."); return;}
-    sendWhatsApp();
-});
-document.getElementById("emailBtn").addEventListener("click", function(){
-    if(!quoteCalculated){ alert("Please calculate quote first."); return;}
-    sendEmail();
-});
+function highlightField(field,valid,messageId){
+if(!valid){field.classList.add("error"); document.getElementById(messageId).style.display="block";}
+else{field.classList.remove("error"); document.getElementById(messageId).style.display="none";}
+}
+
+document.getElementById("quoteBtn").addEventListener("click",calculateQuote);
+document.getElementById("whatsappBtn").addEventListener("click",function(){if(!quoteCalculated){alert("Please calculate quote first."); return;} sendWhatsApp();});
+document.getElementById("emailBtn").addEventListener("click",function(){if(!quoteCalculated){alert("Please calculate quote first."); return;} sendEmail();});
 
 function calculateQuote(){
-let rate=parseFloat(document.getElementById("service").value);
+let name=document.getElementById("name");
+let phone=document.getElementById("phone");
+let email=document.getElementById("email");
+let date=document.getElementById("moveDate");
+let service=document.getElementById("service");
+let collection=document.getElementById("collection");
+let via=document.getElementById("via");
+let delivery=document.getElementById("delivery");
 let stairsCollection=parseInt(document.getElementById("stairsCollection").value);
 let stairsVia=parseInt(document.getElementById("stairsVia").value);
 let stairsDelivery=parseInt(document.getElementById("stairsDelivery").value);
+let valid=true;
+
+// Validare câmpuri obligatorii
+highlightField(name,name.value.trim()!=="","errorName")||valid||valid=false;
+highlightField(phone,phone.value.trim()!=="","errorPhone")||valid||valid=false;
+highlightField(email,email.value.trim()!=="","errorEmail")||valid||valid=false;
+highlightField(date,date.value.trim()!=="","errorDate")||valid||valid=false;
+highlightField(service,service.value!=="","errorService")||valid||valid=false;
+highlightField(collection,collection.value.trim()!=="","errorCollection")||valid||valid=false;
+highlightField(delivery,delivery.value.trim()!=="","errorDelivery")||valid||valid=false;
+if(via.value.trim()!=="") highlightField(via,true,"errorVia");
+
+if(!valid) return;
+
+// DistanceMatrix segments
+const segments=via.value.trim()? [{origin:collection.value,destination:via.value},{origin:via.value,destination:delivery.value}] : [{origin:collection.value,destination:delivery.value}];
+
+let totalMeters=0,totalSeconds=0,processed=0;
+let rate=parseFloat(service.value);
 let stairsTotal=stairsCollection+stairsVia+stairsDelivery;
 let numMen=(rate===40?1:rate===70?2:rate===100?3:0);
 let costStairs=rate!==35?stairsTotal*10*numMen:0;
 
-let collection=document.getElementById("collection").value.trim();
-let via=document.getElementById("via").value.trim();
-let delivery=document.getElementById("delivery").value.trim();
-
-if(!collection || !delivery){ alert("Please fill Collection and Delivery."); return;}
-if(via && !via){ alert("Please fill Via address or leave empty."); return;}
-
-const segments = via ? [{origin:collection,destination:via},{origin:via,destination:delivery}] : [{origin:collection,destination:delivery}];
-let totalMeters=0,totalSeconds=0,processed=0;
-
 segments.forEach(segment=>{
 const serviceDM=new google.maps.DistanceMatrixService();
-serviceDM.getDistanceMatrix({
-  origins:[segment.origin],
-  destinations:[segment.destination],
-  travelMode: google.maps.TravelMode.DRIVING
-}, function(response,status){
-  if(status!=="OK"){alert("Distance calculation error."); return;}
-  totalMeters+=response.rows[0].elements[0].distance.value;
-  totalSeconds+=response.rows[0].elements[0].duration.value;
-  processed++;
-  if(processed===segments.length){
-    displayBreakdown(totalMeters,totalSeconds);
-    quoteCalculated=true;
-  }
+serviceDM.getDistanceMatrix({origins:[segment.origin],destinations:[segment.destination],travelMode:google.maps.TravelMode.DRIVING},
+function(response,status){
+if(status!=="OK"){alert("Distance calculation error."); return;}
+totalMeters+=response.rows[0].elements[0].distance.value;
+totalSeconds+=response.rows[0].elements[0].duration.value;
+processed++;
+if(processed===segments.length){displayBreakdown(totalMeters,totalSeconds);}
 });
 });
 
@@ -155,10 +167,10 @@ let breakdown="Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
 "TOTAL: £"+total.toFixed(2);
 
 document.getElementById("result").innerHTML=breakdown.replace(/\n/g,"<br>");
+quoteCalculated=true;
 }
 }
 
-// WhatsApp
 function sendWhatsApp(){
 let name=document.getElementById("name").value;
 let phone=document.getElementById("phone").value;
@@ -173,7 +185,6 @@ let stairsVia=document.getElementById("stairsVia").value;
 let stairsDelivery=document.getElementById("stairsDelivery").value;
 let info=document.getElementById("info").value;
 let quote=document.getElementById("result").innerText;
-
 let msg=`Fast Any Moves Ltd – Instant Quote
 Name: ${name}
 Phone: ${phone}
@@ -186,11 +197,9 @@ Delivery: ${delivery} (${stairsDelivery})
 Additional Info: ${info}
 Quote:
 ${quote}`;
-
 window.open("https://wa.me/447846769519?text="+encodeURIComponent(msg),"_blank");
 }
 
-// Email
 function sendEmail(){
 let name=document.getElementById("name").value;
 let phone=document.getElementById("phone").value;
