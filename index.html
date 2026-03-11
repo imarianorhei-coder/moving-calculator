@@ -95,14 +95,9 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <div id="result" class="result"></div>
 </div>
 
-<!-- Google API Key -->
-<script src="https://maps.googleapis.com/maps/api/js?key=&AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac libraries=places" async defer></script>
-
-<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
 
 <script>
-emailjs.init("YOUR_EMAILJS_PUBLIC_KEY"); // doar daca vrei sa folosesti EmailJS
-
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
 function isFieldFilled(input){ return input.value.trim().length>0; }
@@ -112,41 +107,42 @@ document.getElementById("quoteForm").addEventListener("submit", function(e){
 e.preventDefault();
 
 // validare completă
-let errors = [];
+let errors=[];
 ['collection_num','collection_street','collection_city','collection_postcode',
 'delivery_num','delivery_street','delivery_city','delivery_postcode'].forEach(id=>{
 if(!isFieldFilled(document.getElementById(id))){document.getElementById(id).classList.add('invalid'); errors.push(id+" incomplete");}});
-let viaFilled = ['via_num','via_street','via_city','via_postcode'].some(id=>isFieldFilled(document.getElementById(id)));
+let viaFilled=['via_num','via_street','via_city','via_postcode'].some(id=>isFieldFilled(document.getElementById(id)));
 if(viaFilled){
 ['via_num','via_street','via_city','via_postcode'].forEach(id=>{
 if(!isFieldFilled(document.getElementById(id))){document.getElementById(id).classList.add('invalid'); errors.push(id+" incomplete");}});
 }
 if(errors.length>0){alert(errors.join("\n")); return;}
 
-const collectionFull = getFullAddress(document.getElementById('collection_num').value,
+const collectionFull=getFullAddress(document.getElementById('collection_num').value,
 document.getElementById('collection_street').value,
 document.getElementById('collection_city').value,
 document.getElementById('collection_postcode').value);
-const viaFull = viaFilled ? getFullAddress(document.getElementById('via_num').value,
+const viaFull=viaFilled?getFullAddress(document.getElementById('via_num').value,
 document.getElementById('via_street').value,
 document.getElementById('via_city').value,
-document.getElementById('via_postcode').value) : null;
-const deliveryFull = getFullAddress(document.getElementById('delivery_num').value,
+document.getElementById('via_postcode').value):null;
+const deliveryFull=getFullAddress(document.getElementById('delivery_num').value,
 document.getElementById('delivery_street').value,
 document.getElementById('delivery_city').value,
 document.getElementById('delivery_postcode').value);
 
-const segments = viaFull ? [{origin:collectionFull,destination:viaFull},{origin:viaFull,destination:deliveryFull}] : [{origin:collectionFull,destination:deliveryFull}];
+const segments=viaFull? [{origin:collectionFull,destination:viaFull},{origin:viaFull,destination:deliveryFull}] : [{origin:collectionFull,destination:deliveryFull}];
 
 let totalMeters=0,totalSeconds=0,processed=0;
 segments.forEach(segment=>{
-const serviceDM = new google.maps.DistanceMatrixService();
+const serviceDM=new google.maps.DistanceMatrixService();
 serviceDM.getDistanceMatrix({origins:[segment.origin], destinations:[segment.destination], travelMode: google.maps.TravelMode.DRIVING}, function(response,status){
-if(status!=="OK"){alert("Distance calculation error"); return;}
-totalMeters += response.rows[0].elements[0].distance.value;
-totalSeconds += response.rows[0].elements[0].duration.value;
+if(status!=="OK"){alert("Distance calculation error. Check addresses."); return;}
+totalMeters+=response.rows[0].elements[0].distance.value;
+totalSeconds+=response.rows[0].elements[0].duration.value;
 processed++;
 if(processed===segments.length){
+// calculeaza costuri
 let rate=parseFloat(document.getElementById("service").value);
 let stairsCollection=parseInt(document.getElementById("stairsCollection").value);
 let stairsVia=parseInt(document.getElementById("stairsVia").value);
@@ -181,8 +177,6 @@ let breakdown="Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
 "TOTAL: £"+total.toFixed(2);
 
 document.getElementById("result").innerHTML=breakdown.replace(/\n/g,"<br>");
-
-// aici poti adauga codul pentru WhatsApp si Email
 }});});
 });
 </script>
