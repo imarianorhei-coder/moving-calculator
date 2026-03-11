@@ -50,8 +50,6 @@ border-radius:6px;
 border:1px solid #ccc;
 }
 
-/* validation colors */
-
 input:invalid,select:invalid,textarea:invalid{
 border:2px solid #e74c3c;
 background:#fff6f6;
@@ -332,16 +330,7 @@ Move Date: ${formattedDate}
 Service: ${document.getElementById("service").options[document.getElementById("service").selectedIndex].text}
 
 Collection: ${collection}
-Collection Stairs: ${document.getElementById("stairsCollection").value}
-
-Via: ${via}
-Via Stairs: ${document.getElementById("stairsVia").value}
-
 Delivery: ${delivery}
-Delivery Stairs: ${document.getElementById("stairsDelivery").value}
-
-Additional Info:
-${document.getElementById("info").value}
 
 ${quote}`;
 
@@ -353,8 +342,6 @@ quoteCalculated=true;
 
 document.getElementById("whatsappBtn").onclick=function(){
 
-if(!quoteCalculated){alert("Calculate quote first");return;}
-
 window.open("https://wa.me/447846769519?text="+encodeURIComponent(fullMessage));
 
 }
@@ -363,27 +350,23 @@ document.getElementById("emailBtn").onclick=function(){
 
 if(!quoteCalculated){alert("Calculate quote first");return;}
 
-emailjs.send("service_1e9jyk9","template_0tbv6y9",{
+let params={
 
 name:document.getElementById("name").value,
 phone:document.getElementById("phone").value,
 email:document.getElementById("email").value,
 move_date:formatDate(document.getElementById("moveDate").value),
-service:document.getElementById("service").options[document.getElementById("service").selectedIndex].text,
 collection:document.getElementById("collection").value,
-stairs_collection:document.getElementById("stairsCollection").value,
-via:document.getElementById("via").value,
-stairs_via:document.getElementById("stairsVia").value,
 delivery:document.getElementById("delivery").value,
-stairs_delivery:document.getElementById("stairsDelivery").value,
-info:document.getElementById("info").value,
 quote_breakdown:fullMessage
 
-}).then(function(){
+};
+
+emailjs.send("service_1e9jyk9","template_0tbv6y9",params);
+
+emailjs.send("service_1e9jyk9","template_autoreply",params);
 
 alert("Email sent successfully");
-
-});
 
 }
 
