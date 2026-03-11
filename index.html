@@ -32,17 +32,10 @@ button{width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px
 <h2>Instant Moving Quote Premium</h2>
 
 <form id="quoteForm">
-<label>Name *</label>
-<input type="text" id="name" required><div class="message-error" id="errorName">This field is required</div>
-
-<label>Phone *</label>
-<input type="text" id="phone" required><div class="message-error" id="errorPhone">This field is required</div>
-
-<label>Email *</label>
-<input type="email" id="email" required><div class="message-error" id="errorEmail">This field is required</div>
-
-<label>Move Date *</label>
-<input type="datetime-local" id="moveDate" required><div class="message-error" id="errorDate">This field is required</div>
+<label>Name *</label><input type="text" id="name" required><div class="message-error" id="errorName">This field is required</div>
+<label>Phone *</label><input type="text" id="phone" required><div class="message-error" id="errorPhone">This field is required</div>
+<label>Email *</label><input type="email" id="email" required><div class="message-error" id="errorEmail">This field is required</div>
+<label>Move Date *</label><input type="datetime-local" id="moveDate" required><div class="message-error" id="errorDate">This field is required</div>
 
 <label>Service *</label>
 <select id="service" required>
@@ -53,20 +46,18 @@ button{width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px
 <option value="100">3 Men + Medium Van</option>
 </select><div class="message-error" id="errorService">Please select a service</div>
 
-<h3>Collection Address *</h3>
-<input type="text" id="collection" placeholder="Start typing..." required>
-<div class="message-error" id="errorCollection">Required</div>
+<label>Collection Address *</label>
+<input type="text" id="collection" placeholder="Start typing..." required><div class="message-error" id="errorCollection">Required</div>
 <label>Collection Stairs</label>
 <select id="stairsCollection"><option value="0">Ground floor / Lift</option><option value="1">1 Flight</option><option value="2">2 Flights</option><option value="3">3 Flights</option><option value="4">4 Flights</option></select>
 
-<h3>Via Address (Optional)</h3>
+<label>Via Address (optional)</label>
 <input type="text" id="via" placeholder="Start typing...">
 <label>Via Stairs</label>
 <select id="stairsVia"><option value="0">Ground floor / Lift</option><option value="1">1 Flight</option><option value="2">2 Flights</option><option value="3">3 Flights</option><option value="4">4 Flights</option></select>
 
-<h3>Delivery Address *</h3>
-<input type="text" id="delivery" placeholder="Start typing..." required>
-<div class="message-error" id="errorDelivery">Required</div>
+<label>Delivery Address *</label>
+<input type="text" id="delivery" placeholder="Start typing..." required><div class="message-error" id="errorDelivery">Required</div>
 <label>Delivery Stairs</label>
 <select id="stairsDelivery"><option value="0">Ground floor / Lift</option><option value="1">1 Flight</option><option value="2">2 Flights</option><option value="3">3 Flights</option><option value="4">4 Flights</option></select>
 
@@ -100,27 +91,26 @@ window.onload = function() {
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 let quoteCalculated=false;
 
-// Highlight invalid fields
 function highlightField(field, valid, msgId){
   if(!valid){ field.classList.add("error"); document.getElementById(msgId).style.display="block"; }
   else{ field.classList.remove("error"); document.getElementById(msgId).style.display="none"; }
 }
 
-// Calculate quote
+// Validate required fields
 document.getElementById("quoteBtn").addEventListener("click", function(){
   let valid=true;
-  highlightField(document.getElementById("name"), document.getElementById("name").value.trim()!=="", "errorName")||valid||valid=false;
-  highlightField(document.getElementById("phone"), document.getElementById("phone").value.trim()!=="", "errorPhone")||valid||valid=false;
-  highlightField(document.getElementById("email"), document.getElementById("email").value.trim()!=="", "errorEmail")||valid||valid=false;
-  highlightField(document.getElementById("moveDate"), document.getElementById("moveDate").value.trim()!=="", "errorDate")||valid||valid=false;
-  highlightField(document.getElementById("service"), document.getElementById("service").value!=="", "errorService")||valid||valid=false;
-  highlightField(document.getElementById("collection"), document.getElementById("collection").value.trim()!=="", "errorCollection")||valid||valid=false;
-  highlightField(document.getElementById("delivery"), document.getElementById("delivery").value.trim()!=="", "errorDelivery")||valid||valid=false;
+  highlightField(document.getElementById("name"), document.getElementById("name").value.trim()!=="","errorName")||valid||valid=false;
+  highlightField(document.getElementById("phone"), document.getElementById("phone").value.trim()!=="","errorPhone")||valid||valid=false;
+  highlightField(document.getElementById("email"), document.getElementById("email").value.trim()!=="","errorEmail")||valid||valid=false;
+  highlightField(document.getElementById("moveDate"), document.getElementById("moveDate").value.trim()!=="","errorDate")||valid||valid=false;
+  highlightField(document.getElementById("service"), document.getElementById("service").value!=="","errorService")||valid||valid=false;
+  highlightField(document.getElementById("collection"), document.getElementById("collection").value.trim()!=="","errorCollection")||valid||valid=false;
+  highlightField(document.getElementById("delivery"), document.getElementById("delivery").value.trim()!=="","errorDelivery")||valid||valid=false;
   if(!valid) return;
   calculateDistanceAndQuote();
 });
 
-// Distance + cost
+// Calculate distance and quote
 function calculateDistanceAndQuote(){
   const rate=parseFloat(document.getElementById("service").value);
   const stairsCollection=parseInt(document.getElementById("stairsCollection").value);
@@ -138,7 +128,7 @@ function calculateDistanceAndQuote(){
   let totalMeters=0, totalSeconds=0, processed=0;
 
   segments.forEach((seg)=>{
-    const serviceDM = new google.maps.DistanceMatrixService();
+    const serviceDM=new google.maps.DistanceMatrixService();
     serviceDM.getDistanceMatrix({origins:[seg.origin], destinations:[seg.destination], travelMode:google.maps.TravelMode.DRIVING}, function(resp,status){
       if(status!=="OK"){ alert("Distance calculation error."); return;}
       totalMeters+=resp.rows[0].elements[0].distance.value;
@@ -182,7 +172,7 @@ ${document.getElementById("result").innerText}`;
 // EmailJS
 document.getElementById("emailBtn").addEventListener("click", function(){
   if(!quoteCalculated){ alert("Please calculate quote first."); return; }
-  emailjs.send(SERVICE_ID, TEMPLATE_ID,{
+  emailjs.send(SERVICE_ID,TEMPLATE_ID,{
     name: document.getElementById("name").value,
     phone: document.getElementById("phone").value,
     email: document.getElementById("email").value,
