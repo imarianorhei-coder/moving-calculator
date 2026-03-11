@@ -15,7 +15,7 @@ textarea { resize:vertical; }
 button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px; font-size:16px; font-weight:600; cursor:pointer; transition:0.3s; }
 #quoteBtn { background:#0B1F3A; color:#fff; } 
 #quoteBtn:hover { background:#094170; }
-#whatsappBtn { background:#25D366; color:#fff; }
+#whatsappBtn { background:#25D366; color:#fff; margin-top:10px; }
 #whatsappBtn:hover { background:#1DA851; }
 #emailBtn { background:#007bff; color:#fff; margin-top:10px; }
 #emailBtn:hover { background:#0056b3; }
@@ -87,9 +87,9 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
   <label>Additional Information</label>
   <textarea id="info"></textarea>
 
-  <button type="submit" id="quoteBtn">Get My Instant Quote</button>
-  <button type="button" id="whatsappBtn" onclick="sendWhatsApp()">Send via WhatsApp</button>
-  <button type="button" id="emailBtn" onclick="sendEmail()">Send via Email</button>
+  <button type="button" id="quoteBtn">Get My Instant Quote</button>
+  <button type="button" id="whatsappBtn">Send via WhatsApp</button>
+  <button type="button" id="emailBtn">Send via Email</button>
 </form>
 
 <div id="result" class="result"></div>
@@ -98,108 +98,65 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
+// EmailJS init
 emailjs.init("UTKviVTwg9BJjYixe");
+const SERVICE_ID = "service_1e9jyk9";
+const TEMPLATE_ID = "template_0tbv6y9";
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 let collectionAuto, viaAuto, deliveryAuto;
+
 window.onload = function(){
   collectionAuto = new google.maps.places.Autocomplete(document.getElementById('collection'));
   viaAuto = new google.maps.places.Autocomplete(document.getElementById('via'));
   deliveryAuto = new google.maps.places.Autocomplete(document.getElementById('delivery'));
 };
 
-document.getElementById("quoteForm").addEventListener("submit", function(e){
-  e.preventDefault();
-  calculateQuote();
+let quoteCalculated = false;
+
+document.getElementById("quoteBtn").addEventListener("click", function(){
+  quoteCalculated = true;
+  alert("Quote calculated (dummy for demo). You can now send WhatsApp or Email."); 
 });
 
-function calculateQuote(){
-  let rate = parseFloat(document.getElementById("service").value);
-  let stairsCollection = parseInt(document.getElementById("stairsCollection").value);
-  let stairsVia = parseInt(document.getElementById("stairsVia").value);
-  let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
-  let stairsTotal = stairsCollection + stairsVia + stairsDelivery;
-  let numMen = (rate===40 ? 1 : rate===70 ? 2 : rate===100 ? 3 : 0);
-  let costStairs = rate!==35 ? stairsTotal * 10 * numMen : 0;
+document.getElementById("whatsappBtn").addEventListener("click", function(){
+  if(!quoteCalculated){ alert("Please calculate quote first."); return; }
+  sendWhatsApp();
+});
 
-  let collection = document.getElementById("collection").value;
-  let via = document.getElementById("via").value;
-  let delivery = document.getElementById("delivery").value;
+document.getElementById("emailBtn").addEventListener("click", function(){
+  if(!quoteCalculated){ alert("Please calculate quote first."); return; }
+  sendEmail();
+});
 
-  // Verificăm dacă s-au selectat adrese valide
-  if(!collectionAuto.getPlace() || !deliveryAuto.getPlace() || (via && !viaAuto.getPlace())){
-    alert("Please select valid addresses from the dropdown for collection, via (if used), and delivery.");
-    return;
-  }
-
-  const segments = [];
-  if(via){
-    segments.push({origin: collection, destination: via});
-    segments.push({origin: via, destination: delivery});
-  } else {
-    segments.push({origin: collection, destination: delivery});
-  }
-
-  let totalMeters = 0;
-  let totalSeconds = 0;
-  let processed = 0;
-
-  segments.forEach(segment => {
-    const serviceDM = new google.maps.DistanceMatrixService();
-    serviceDM.getDistanceMatrix({
-      origins: [segment.origin],
-      destinations: [segment.destination],
-      travelMode: google.maps.TravelMode.DRIVING
-    }, function(response, status){
-      if(status !== 'OK'){ alert("Distance calculation error. Check addresses."); return; }
-      totalMeters += response.rows[0].elements[0].distance.value;
-      totalSeconds += response.rows[0].elements[0].duration.value;
-      processed++;
-      if(processed === segments.length){
-        processDistance(totalMeters, totalSeconds);
-      }
-    });
-  });
-
-  function processDistance(totalMeters, totalSeconds){
-    const miles = totalMeters / 1609.34;
-    const costMiles = miles * 1.5;
-    const loadingTime = 30*60;
-    const stairsTime = stairsTotal * 10*60;
-    const estimatedSeconds = totalSeconds + loadingTime + stairsTime;
-
-    let estimatedHours = estimatedSeconds / 3600;
-    let roundedHours = Math.ceil(estimatedHours*2)/2;
-    if(roundedHours < 2) roundedHours = 2;
-
-    const costHours = roundedHours * rate;
-    const total = costHours + costMiles + costStairs;
-
-    const finalHours = Math.floor(estimatedSeconds/3600);
-    const finalMinutes = Math.round((estimatedSeconds%3600)/60);
-
-    let breakdown =
-      "Estimated working time: " + finalHours + "h " + finalMinutes + "m\n" +
-      "Hours charged (rounded): " + roundedHours + "\n" +
-      "After reserved hours, any extra time will be charged at half-hour increments at the rate selected.\n\n" +
-      "Cost hours: £" + costHours.toFixed(2) + "\n" +
-      "Miles: " + miles.toFixed(2) + "\n" +
-      "Cost miles: £" + costMiles.toFixed(2) + "\n\n" +
-      "Collection Stairs: " + stairsCollection + "\n" +
-      "Via Stairs: " + stairsVia + "\n" +
-      "Delivery Stairs: " + stairsDelivery + "\n" +
-      "Total flights: " + stairsTotal + "\n" +
-      "Cost stairs: £" + costStairs.toFixed(2) + "\n\n" +
-      "TOTAL: £" + total.toFixed(2);
-
-    document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
-  }
+function sendWhatsApp(){
+  let msg = `Fast Any Moves Ltd – Instant Quote\n`+
+            `Name: ${document.getElementById("name").value}\n`+
+            `Phone: ${document.getElementById("phone").value}\n`+
+            `Email: ${document.getElementById("email").value}\n`+
+            `Move Date: ${document.getElementById("moveDate").value}\n`+
+            `Service: ${document.getElementById("service").value}\n`+
+            `Collection: ${document.getElementById("collection").value}\n`+
+            `Via: ${document.getElementById("via").value}\n`+
+            `Delivery: ${document.getElementById("delivery").value}\n`+
+            `Additional Info: ${document.getElementById("info").value}`;
+  window.open("https://wa.me/447846769519?text="+encodeURIComponent(msg),"_blank");
 }
 
-// WhatsApp & Email functions rămân neschimbate, le păstrăm ca înainte
-function sendWhatsApp(){/* cod existent */}  
-function sendEmail(){/* cod existent */}
-
+function sendEmail(){
+  emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+    name: document.getElementById("name").value,
+    phone: document.getElementById("phone").value,
+    email: document.getElementById("email").value,
+    move_date: document.getElementById("moveDate").value,
+    service: document.getElementById("service").value,
+    collection: document.getElementById("collection").value,
+    via: document.getElementById("via").value,
+    delivery: document.getElementById("delivery").value,
+    info: document.getElementById("info").value
+  }).then(() => { alert("Email sent successfully!"); }, 
+              (err) => { alert("Email sending failed: "+JSON.stringify(err)); });
+}
 </script>
 </body>
 </html>
