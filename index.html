@@ -165,7 +165,7 @@ line-height:1.5;
 
 emailjs.init("UTKviVTwg9BJjYixe");
 
-document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
+document.getElementById("moveDate").min=new Date().toISOString().slice(0,16);
 
 let quoteCalculated=false;
 
@@ -180,7 +180,6 @@ new google.maps.places.Autocomplete(document.getElementById('delivery'));
 document.getElementById("quoteForm").addEventListener("submit",function(e){
 
 e.preventDefault();
-
 calculateQuote();
 
 });
@@ -245,11 +244,9 @@ function processDistance(totalMeters,totalSeconds){
 const miles=totalMeters/1609.34;
 const costMiles=miles*1.5;
 
-let loadingTime=30*60;
-
 const stairsTime=stairsTotal*10*60;
 
-let estimatedSeconds=totalSeconds+loadingTime+stairsTime;
+let estimatedSeconds=totalSeconds+stairsTime+1800;
 
 let estimatedHours=estimatedSeconds/3600;
 let roundedHours=Math.ceil(estimatedHours*2)/2;
@@ -258,19 +255,17 @@ if(roundedHours<2)roundedHours=2;
 
 const costHours=roundedHours*rate;
 
-let total=costHours+costMiles+costStairs;
-
 let congestion=0;
 
-const zones=["EC","WC","W1","SW1","SE1"];
-
-zones.forEach(zone=>{
-if(collection.toUpperCase().includes(zone)||delivery.toUpperCase().includes(zone)){
+["EC","WC","W1","SW1","SE1"].forEach(zone=>{
+if(collection.toUpperCase().includes(zone)||
+delivery.toUpperCase().includes(zone)||
+via.toUpperCase().includes(zone)){
 congestion=18;
 }
 });
 
-total+=congestion;
+let total=costHours+costMiles+costStairs+congestion;
 
 document.getElementById("result").innerHTML=
 
@@ -295,15 +290,29 @@ document.getElementById("whatsappBtn").onclick=function(){
 
 if(!quoteCalculated){alert("Please calculate quote first");return;}
 
-let msg=`Fast Any Moves Booking
+let msg=`Fast Any Moves – Booking Request
 
 Name: ${document.getElementById("name").value}
 Phone: ${document.getElementById("phone").value}
 Email: ${document.getElementById("email").value}
 
-Collection: ${document.getElementById("collection").value}
-Delivery: ${document.getElementById("delivery").value}
+Move Date: ${document.getElementById("moveDate").value}
 
+Service: ${document.getElementById("service").options[
+document.getElementById("service").selectedIndex].text}
+
+Collection: ${document.getElementById("collection").value}
+Collection Stairs: ${document.getElementById("stairsCollection").value}
+
+Via: ${document.getElementById("via").value}
+Via Stairs: ${document.getElementById("stairsVia").value}
+
+Delivery: ${document.getElementById("delivery").value}
+Delivery Stairs: ${document.getElementById("stairsDelivery").value}
+
+Additional Info: ${document.getElementById("info").value}
+
+QUOTE
 ${document.getElementById("result").innerText}`;
 
 window.open("https://wa.me/447846769519?text="+encodeURIComponent(msg));
@@ -319,6 +328,22 @@ emailjs.send("service_1e9jyk9","template_0tbv6y9",{
 name:document.getElementById("name").value,
 phone:document.getElementById("phone").value,
 email:document.getElementById("email").value,
+move_date:document.getElementById("moveDate").value,
+
+service:document.getElementById("service").options[
+document.getElementById("service").selectedIndex].text,
+
+collection:document.getElementById("collection").value,
+stairs_collection:document.getElementById("stairsCollection").value,
+
+via:document.getElementById("via").value,
+stairs_via:document.getElementById("stairsVia").value,
+
+delivery:document.getElementById("delivery").value,
+stairs_delivery:document.getElementById("stairsDelivery").value,
+
+info:document.getElementById("info").value,
+
 quote_breakdown:document.getElementById("result").innerText
 
 }).then(()=>{
