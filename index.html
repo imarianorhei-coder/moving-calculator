@@ -52,7 +52,7 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
   </select>
 
   <label>Collection Address *</label>
-  <input type="text" id="collection" placeholder="Postcode or Address" required>
+  <input type="text" id="collection" placeholder="Full address including postcode" required>
   <label>Collection Stairs</label>
   <select id="stairsCollection">
     <option value="0">Ground floor / Lift</option>
@@ -63,7 +63,7 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
   </select>
 
   <label>Via Address (optional)</label>
-  <input type="text" id="via" placeholder="Postcode or Address">
+  <input type="text" id="via" placeholder="Full address including postcode">
   <label>Via Stairs</label>
   <select id="stairsVia">
     <option value="0">Ground floor / Lift</option>
@@ -74,7 +74,7 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
   </select>
 
   <label>Delivery Address *</label>
-  <input type="text" id="delivery" placeholder="Postcode or Address" required>
+  <input type="text" id="delivery" placeholder="Full address including postcode" required>
   <label>Delivery Stairs</label>
   <select id="stairsDelivery">
     <option value="0">Ground floor / Lift</option>
@@ -100,8 +100,8 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <script>
 emailjs.init("UTKviVTwg9BJjYixe");
 
-document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 let collectionAuto, viaAuto, deliveryAuto;
+
 window.onload = function(){
   collectionAuto = new google.maps.places.Autocomplete(document.getElementById('collection'));
   viaAuto = new google.maps.places.Autocomplete(document.getElementById('via'));
@@ -122,15 +122,27 @@ function calculateQuote(){
   let numMen = (rate===40 ? 1 : rate===70 ? 2 : rate===100 ? 3 : 0);
   let costStairs = rate!==35 ? stairsTotal * 10 * numMen : 0;
 
-  let collection = document.getElementById("collection").value;
-  let via = document.getElementById("via").value;
-  let delivery = document.getElementById("delivery").value;
+  // Verificăm dacă toate adresele sunt full și valide
+  const collectionPlace = collectionAuto.getPlace();
+  const deliveryPlace = deliveryAuto.getPlace();
+  const viaPlace = via ? viaAuto.getPlace() : true;
 
-  // Verificăm dacă s-au selectat adrese valide
-  if(!collectionAuto.getPlace() || !deliveryAuto.getPlace() || (via && !viaAuto.getPlace())){
-    alert("Please select valid addresses from the dropdown for collection, via (if used), and delivery.");
+  if(!collectionPlace || !collectionPlace.geometry){
+    alert("Please select a full valid address for Collection.");
     return;
   }
+  if(!deliveryPlace || !deliveryPlace.geometry){
+    alert("Please select a full valid address for Delivery.");
+    return;
+  }
+  if(via && (!viaPlace || !viaPlace.geometry)){
+    alert("Please select a full valid address for Via.");
+    return;
+  }
+
+  const collection = document.getElementById("collection").value;
+  const via = document.getElementById("via").value;
+  const delivery = document.getElementById("delivery").value;
 
   const segments = [];
   if(via){
@@ -165,7 +177,7 @@ function calculateQuote(){
     const miles = totalMeters / 1609.34;
     const costMiles = miles * 1.5;
     const loadingTime = 30*60;
-    const stairsTime = stairsTotal * 10*60;
+    const stairsTime = stairsTotal*10*60;
     const estimatedSeconds = totalSeconds + loadingTime + stairsTime;
 
     let estimatedHours = estimatedSeconds / 3600;
@@ -196,10 +208,9 @@ function calculateQuote(){
   }
 }
 
-// WhatsApp & Email functions rămân neschimbate, le păstrăm ca înainte
+// WhatsApp & EmailJS rămân la fel
 function sendWhatsApp(){/* cod existent */}  
 function sendEmail(){/* cod existent */}
-
 </script>
 </body>
 </html>
