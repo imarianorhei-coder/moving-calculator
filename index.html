@@ -50,6 +50,17 @@ border-radius:6px;
 border:1px solid #ccc;
 }
 
+/* VALIDATION COLORS */
+
+input:invalid,select:invalid,textarea:invalid{
+border:2px solid #e74c3c;
+background:#fff6f6;
+}
+
+input:valid,select:valid,textarea:valid{
+border:2px solid #2ecc71;
+}
+
 button{
 width:100%;
 padding:15px;
@@ -145,12 +156,18 @@ white-space:pre-line;
 <textarea id="info"></textarea>
 
 <button type="submit" id="quoteBtn">Get My Instant Quote</button>
-<button type="button" id="whatsappBtn">Book via WhatsApp</button>
-<button type="button" id="emailBtn">Book via Email</button>
 
 </form>
 
 <div id="result" class="result"></div>
+
+<div id="bookingButtons" style="display:none;margin-top:20px;">
+
+<button id="whatsappBtn">Book via WhatsApp</button>
+
+<button id="emailBtn">Book via Email</button>
+
+</div>
 
 </div>
 
@@ -302,6 +319,8 @@ To confirm your booking please contact us using one of the options below.`;
 
 document.getElementById("result").innerText=quote;
 
+document.getElementById("bookingButtons").style.display="block";
+
 let formattedDate=formatDate(document.getElementById("moveDate").value);
 
 fullMessage=`Fast Any Moves Booking
@@ -361,6 +380,10 @@ delivery:document.getElementById("delivery").value,
 stairs_delivery:document.getElementById("stairsDelivery").value,
 info:document.getElementById("info").value,
 quote_breakdown:fullMessage
+
+}).then(function(){
+
+alert("Email sent successfully");
 
 });
 
