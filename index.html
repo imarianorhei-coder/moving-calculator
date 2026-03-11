@@ -5,7 +5,7 @@
 <title>Fast Any Moves Ltd – Instant Moving Quote</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body { font-family:'Montserrat',Arial,sans-serif; background:#f0f2f5; margin:0;}
+body { font-family:'Montserrat',Arial,sans-serif; background:#f0f2f5; margin:0; }
 .container { max-width:780px; margin:40px auto; background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 25px rgba(0,0,0,0.12);}
 h1,h2{text-align:center;}
 h1{color:#0B1F3A;font-size:28px;margin-bottom:5px;}
@@ -45,7 +45,8 @@ button{width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px
 </select>
 
 <label>Collection Address *</label><input type="text" id="collection" placeholder="Postcode or Address" required>
-<label>Collection Stairs</label><select id="stairsCollection"><option value="0">Ground floor / Lift</option><option value="1">1 Flight</option><option value="2">2 Flights</option><option value="3">3 Flights</option><option value="4">4 Flights</option></select>
+<label>Collection Stairs</label>
+<select id="stairsCollection"><option value="0">Ground floor / Lift</option><option value="1">1 Flight</option><option value="2">2 Flights</option><option value="3">3 Flights</option><option value="4">4 Flights</option></select>
 
 <label>Via Address (optional)</label><input type="text" id="via" placeholder="Postcode or Address">
 <label>Via Stairs</label><select id="stairsVia"><option value="0">Ground floor / Lift</option><option value="1">1 Flight</option><option value="2">2 Flights</option><option value="3">3 Flights</option><option value="4">4 Flights</option></select>
@@ -63,13 +64,14 @@ button{width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px
 <div id="result" class="result"></div>
 </div>
 
-<!-- Google Maps API -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 
 <script>
-// Initialize EmailJS – doar pui cheile tale
-emailjs.init("UTKviVTwg9BJjYixe");
+// EmailJS – doar API key pus aici
+emailjs.init("UTKviVTwg9BJjYixe"); // public key EmailJS
+const SERVICE_ID="service_1e9jyk9";
+const TEMPLATE_ID="template_0tbv6y9";
 
 let collectionAuto, viaAuto, deliveryAuto;
 window.onload = function(){
@@ -80,16 +82,15 @@ deliveryAuto = new google.maps.places.Autocomplete(document.getElementById('deli
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
-let quoteCalculated = false;
+let quoteCalculated=false;
 
-document.getElementById("quoteBtn").addEventListener("click", function() {
-    calculateQuote();
-});
+document.getElementById("quoteBtn").addEventListener("click", function(){ calculateQuote(); });
 
 document.getElementById("whatsappBtn").addEventListener("click", function(){
     if(!quoteCalculated){ alert("Please calculate quote first."); return;}
     sendWhatsApp();
 });
+
 document.getElementById("emailBtn").addEventListener("click", function(){
     if(!quoteCalculated){ alert("Please calculate quote first."); return;}
     sendEmail();
@@ -104,14 +105,12 @@ let stairsTotal=stairsCollection+stairsVia+stairsDelivery;
 let numMen=(rate===40?1:rate===70?2:rate===100?3:0);
 let costStairs=rate!==35?stairsTotal*10*numMen:0;
 
-let collection=document.getElementById("collection").value;
-let via=document.getElementById("via").value;
-let delivery=document.getElementById("delivery").value;
+let collection=document.getElementById("collection").value.trim();
+let via=document.getElementById("via").value.trim();
+let delivery=document.getElementById("delivery").value.trim();
 
-if(!collectionAuto.getPlace() || !deliveryAuto.getPlace() || (via && !viaAuto.getPlace())){
-alert("Please select valid addresses from the dropdown.");
-return;
-}
+if(!collection || !delivery){ alert("Please fill in Collection and Delivery addresses."); return;}
+if(via && !via){ alert("Please fill Via address or leave empty."); return;}
 
 const segments = via ? [{origin:collection,destination:via},{origin:via,destination:delivery}] : [{origin:collection,destination:delivery}];
 let totalMeters=0,totalSeconds=0,processed=0;
@@ -129,7 +128,7 @@ totalSeconds+=response.rows[0].elements[0].duration.value;
 processed++;
 if(processed===segments.length){
 displayBreakdown(totalMeters,totalSeconds);
-quoteCalculated = true;
+quoteCalculated=true;
 }
 });
 });
@@ -159,7 +158,8 @@ let breakdown="Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
 "Cost stairs: £"+costStairs.toFixed(2)+"\n"+
 "TOTAL: £"+total.toFixed(2);
 
-document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
+document.getElementById("result").innerHTML=breakdown.replace(/\n/g,"<br>");
+}
 }
 
 // WhatsApp
@@ -208,7 +208,7 @@ let stairsDelivery=document.getElementById("stairsDelivery").value;
 let info=document.getElementById("info").value;
 let quote=document.getElementById("result").innerText;
 
-emailjs.send("service_1e9jyk9","template_0tbv6y9",{
+emailjs.send(SERVICE_ID,TEMPLATE_ID,{
 name:name,
 phone:phone,
 email:email,
