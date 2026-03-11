@@ -55,10 +55,6 @@ border:2px solid #e74c3c;
 background:#fff6f6;
 }
 
-input:valid,select:valid,textarea:valid{
-border:2px solid #2ecc71;
-}
-
 button{
 width:100%;
 padding:15px;
@@ -225,56 +221,31 @@ const collection=document.getElementById("collection").value;
 const via=document.getElementById("via").value;
 const delivery=document.getElementById("delivery").value;
 
-const segments=via?
-[{origin:collection,destination:via},{origin:via,destination:delivery}]
-:[{origin:collection,destination:delivery}];
+const serviceDM=new google.maps.DistanceMatrixService();
 
-let totalMeters=0,totalSeconds=0,done=0;
+serviceDM.getDistanceMatrix({
 
-segments.forEach(seg=>{
-
-new google.maps.DistanceMatrixService().getDistanceMatrix({
-
-origins:[seg.origin],
-destinations:[seg.destination],
+origins:[collection],
+destinations:[delivery],
 travelMode:"DRIVING"
 
-},function(res){
+},
 
-let el=res.rows[0].elements[0];
+function(response){
 
-totalMeters+=el.distance.value;
-totalSeconds+=el.duration.value;
-
-done++;
-
-if(done===segments.length){
-
-finish(totalMeters,totalSeconds);
-
-}
-
-});
-
-});
-
-function finish(meters,seconds){
+let meters=response.rows[0].elements[0].distance.value;
+let seconds=response.rows[0].elements[0].duration.value;
 
 let miles=meters/1609.34;
 let costMiles=miles*1.5;
 
-let load=30*60;
-
-if(rate===35) load=40*60;
-if(rate===40) load=30*60;
-if(rate===70) load=20*60;
-if(rate===100) load=15*60;
+let loadingTime=30*60;
 
 let stairsTime=stairsTotal*10*60;
 
-let totalTime=seconds+load+stairsTime;
+let estimatedSeconds=seconds+loadingTime+stairsTime;
 
-let hours=Math.ceil((totalTime/3600)*2)/2;
+let hours=Math.ceil((estimatedSeconds/3600)*2)/2;
 
 if(hours<2)hours=2;
 
@@ -282,13 +253,7 @@ let costHours=hours*rate;
 
 let congestion=0;
 
-["EC","WC","W1","SW1","SE1"].forEach(z=>{
-
-if(collection.toUpperCase().includes(z)||via.toUpperCase().includes(z)||delivery.toUpperCase().includes(z)){
-congestion=18;
-}
-
-});
+if(collection.includes("EC")||delivery.includes("EC")) congestion=18;
 
 let total=costHours+costMiles+costStairs+congestion;
 
@@ -317,56 +282,58 @@ document.getElementById("result").innerText=quote;
 
 document.getElementById("bookingButtons").style.display="block";
 
-let formattedDate=formatDate(document.getElementById("moveDate").value);
-
-fullMessage=`Fast Any Moves Booking
-
-Name: ${document.getElementById("name").value}
-Phone: ${document.getElementById("phone").value}
-Email: ${document.getElementById("email").value}
-
-Move Date: ${formattedDate}
-
-Service: ${document.getElementById("service").options[document.getElementById("service").selectedIndex].text}
-
-Collection: ${collection}
-Delivery: ${delivery}
-
-${quote}`;
+fullMessage=quote;
 
 quoteCalculated=true;
 
-}
+});
 
 }
 
 document.getElementById("whatsappBtn").onclick=function(){
 
-window.open("https://wa.me/447846769519?text="+encodeURIComponent(fullMessage));
+let msg=`Fast Any Moves Booking
+
+Name: ${name.value}
+Phone: ${phone.value}
+Email: ${email.value}
+
+Collection: ${collection.value}
+Delivery: ${delivery.value}
+
+${result.innerText}`;
+
+window.open("https://wa.me/447846769519?text="+encodeURIComponent(msg));
 
 }
 
 document.getElementById("emailBtn").onclick=function(){
 
-if(!quoteCalculated){alert("Calculate quote first");return;}
+if(!quoteCalculated){
+alert("Please calculate the quote first.");
+return;
+}
 
 let params={
 
-name:document.getElementById("name").value,
-phone:document.getElementById("phone").value,
-email:document.getElementById("email").value,
-move_date:formatDate(document.getElementById("moveDate").value),
-collection:document.getElementById("collection").value,
-delivery:document.getElementById("delivery").value,
+name:name.value,
+phone:phone.value,
+email:email.value,
+move_date:formatDate(moveDate.value),
+collection:collection.value,
+delivery:delivery.value,
 quote_breakdown:fullMessage
 
 };
 
-emailjs.send("service_1e9jyk9","template_0tbv6y9",params);
+emailjs.send("service_1e9jyk9","template_0tbv6y9",params)
+.then(function(){
 
-emailjs.send("service_1e9jyk9","template_autoreply",params);
+emailjs.send("service_1e9jyk9","template_8qxabwq",params);
 
 alert("Email sent successfully");
+
+});
 
 }
 
