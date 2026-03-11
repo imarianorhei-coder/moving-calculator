@@ -125,29 +125,34 @@ function calculateQuote(){
   let via = document.getElementById("via").value;
   let delivery = document.getElementById("delivery").value;
 
-  const directionsService = new google.maps.DirectionsService();
-  directionsService.route({
-      origin: collection,
-      destination: delivery,
-      waypoints: via ? [{ location: via, stopover: true }] : [],
-      travelMode: google.maps.TravelMode.DRIVING
-  }, function(result, status){
-      if(status !== 'OK'){
-          // fallback DistanceMatrix pentru a preveni eroarea
-          const distanceService = new google.maps.DistanceMatrixService();
-          distanceService.getDistanceMatrix({
-              origins: [collection],
-              destinations: [delivery],
-              travelMode: google.maps.TravelMode.DRIVING
-          }, function(dmResult, dmStatus){
-              if(dmStatus !== 'OK'){ alert("Distance calculation error. Check addresses."); return; }
-              processDistance(dmResult.rows[0].elements[0].distance.value, dmResult.rows[0].elements[0].duration.value);
-          });
-      } else {
-          const totalMeters = result.routes[0].legs.reduce((sum, leg) => sum + leg.distance.value, 0);
-          const totalSeconds = result.routes[0].legs.reduce((sum, leg) => sum + leg.duration.value, 0);
-          processDistance(totalMeters, totalSeconds);
-      }
+  // Segmentează traseul
+  const segments = [];
+  if(via){
+      segments.push({origin: collection, destination: via});
+      segments.push({origin: via, destination: delivery});
+  } else {
+      segments.push({origin: collection, destination: delivery});
+  }
+
+  let totalMeters = 0;
+  let totalSeconds = 0;
+  let processed = 0;
+
+  segments.forEach(segment => {
+      const serviceDM = new google.maps.DistanceMatrixService();
+      serviceDM.getDistanceMatrix({
+          origins: [segment.origin],
+          destinations: [segment.destination],
+          travelMode: google.maps.TravelMode.DRIVING
+      }, function(response, status){
+          if(status !== 'OK'){ alert("Distance calculation error. Check addresses."); return; }
+          totalMeters += response.rows[0].elements[0].distance.value;
+          totalSeconds += response.rows[0].elements[0].duration.value;
+          processed++;
+          if(processed === segments.length){
+              processDistance(totalMeters, totalSeconds);
+          }
+      });
   });
 
   function processDistance(totalMeters, totalSeconds){
