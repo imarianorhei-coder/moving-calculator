@@ -52,7 +52,7 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
   </select>
 
   <label>Collection Address *</label>
-  <input type="text" id="collection" placeholder="Postcode" required>
+  <input type="text" id="collection" placeholder="Postcode or Address" required>
   <label>Collection Stairs</label>
   <select id="stairsCollection">
     <option value="0">Ground floor / Lift</option>
@@ -63,7 +63,7 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
   </select>
 
   <label>Via Address (optional)</label>
-  <input type="text" id="via" placeholder="Postcode">
+  <input type="text" id="via" placeholder="Postcode or Address">
   <label>Via Stairs</label>
   <select id="stairsVia">
     <option value="0">Ground floor / Lift</option>
@@ -74,7 +74,7 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
   </select>
 
   <label>Delivery Address *</label>
-  <input type="text" id="delivery" placeholder="Postcode" required>
+  <input type="text" id="delivery" placeholder="Postcode or Address" required>
   <label>Delivery Stairs</label>
   <select id="stairsDelivery">
     <option value="0">Ground floor / Lift</option>
@@ -95,15 +95,15 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <div id="result" class="result"></div>
 </div>
 
-<!-- PUI API KEY-ul tau Google Maps aici -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
+<!-- Pui API KEY-ul tau Google Maps aici -->
+<script src="https://maps.googleapis.com/maps/api/js?key= AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
-emailjs.init("UTKviVTwg9BJjYixe"); // User ID EmailJS deja setat
+emailjs.init("UTKviVTwg9BJjYixe");
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 window.onload = function(){
-  new google.maps.places.Autocomplete(document.getElementById('collection'));
+  newgoogle.maps.places.Autocomplete(document.getElementById('collection'));
   new google.maps.places.Autocomplete(document.getElementById('via'));
   new google.maps.places.Autocomplete(document.getElementById('delivery'));
 };
@@ -119,7 +119,6 @@ function calculateQuote(){
   let stairsVia = parseInt(document.getElementById("stairsVia").value);
   let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
   let stairsTotal = stairsCollection + stairsVia + stairsDelivery;
-
   let numMen = (rate===40 ? 1 : rate===70 ? 2 : rate===100 ? 3 : 0);
   let costStairs = rate!==35 ? stairsTotal * 10 * numMen : 0;
 
@@ -127,56 +126,52 @@ function calculateQuote(){
   let via = document.getElementById("via").value;
   let delivery = document.getElementById("delivery").value;
 
-  let service = new google.maps.DistanceMatrixService();
-  let destinations = via ? [via, delivery] : [delivery];
+  const directionsService = new google.maps.DirectionsService();
+  directionsService.route({
+      origin: collection,
+      destination: delivery,
+      waypoints: via ? [{ location: via, stopover: true }] : [],
+      travelMode: google.maps.TravelMode.DRIVING
+  }, function(result, status){
+      if(status !== 'OK'){ alert("Distance calculation error"); return; }
 
-  service.getDistanceMatrix({
-    origins:[collection],
-    destinations:destinations,
-    travelMode: google.maps.TravelMode.DRIVING
-  }, function(response,status){
-    if(status!=="OK"){ alert("Distance calculation error"); return; }
+      const totalMeters = result.routes[0].legs.reduce((sum, leg) => sum + leg.distance.value, 0);
+      const totalSeconds = result.routes[0].legs.reduce((sum, leg) => sum + leg.duration.value, 0);
 
-    let totalMeters=0, totalSeconds=0;
-    response.rows[0].elements.forEach(el=>{
-      totalMeters+=el.distance.value;
-      totalSeconds+=el.duration.value;
-    });
+      const miles = totalMeters / 1609.34;
+      const costMiles = miles * 1.5;
+      const loadingTime = 30 * 60;
+      const stairsTime = stairsTotal * 10 * 60;
+      const estimatedSeconds = totalSeconds + loadingTime + stairsTime;
 
-    let miles = totalMeters/1609.34;
-    let costMiles = miles*1.5;
-    let loadingTime=30*60;
-    let estimatedSeconds=totalSeconds+loadingTime+stairsTotal*10*60; // doar timp estimativ pentru scări
-    let estimatedHours = estimatedSeconds/3600;
-    let roundedHours = Math.ceil(estimatedHours*2)/2;
-    if(roundedHours<2) roundedHours=2;
+      let estimatedHours = estimatedSeconds / 3600;
+      let roundedHours = Math.ceil(estimatedHours*2)/2;
+      if(roundedHours < 2) roundedHours = 2;
 
-    let costHours = roundedHours*rate;
-    let total = costHours+costMiles+costStairs;
+      const costHours = roundedHours * rate;
+      const total = costHours + costMiles + costStairs;
 
-    let finalHours = Math.floor(estimatedSeconds/3600);
-    let finalMinutes = Math.round((estimatedSeconds%3600)/60);
-    if(finalMinutes===60){ finalHours++; finalMinutes=0; }
+      const finalHours = Math.floor(estimatedSeconds/3600);
+      const finalMinutes = Math.round((estimatedSeconds%3600)/60);
 
-    let breakdown=
-      "Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
-      "Hours charged (rounded): "+roundedHours+"\n"+
-      "After reserved hours, any extra time will be charged at half-hour increments at the rate selected.\n\n"+
-      "Cost hours: £"+costHours.toFixed(2)+"\n"+
-      "Miles: "+miles.toFixed(2)+"\n"+
-      "Cost miles: £"+costMiles.toFixed(2)+"\n\n"+
-      "Collection Stairs: "+stairsCollection+"\n"+
-      "Via Stairs: "+stairsVia+"\n"+
-      "Delivery Stairs: "+stairsDelivery+"\n"+
-      "Total flights: "+stairsTotal+"\n"+
-      "Cost stairs: £"+costStairs.toFixed(2)+"\n\n"+
-      "TOTAL: £"+total.toFixed(2);
+      let breakdown =
+        "Estimated working time: " + finalHours + "h " + finalMinutes + "m\n" +
+        "Hours charged (rounded): " + roundedHours + "\n" +
+        "After reserved hours, any extra time will be charged at half-hour increments at the rate selected.\n\n" +
+        "Cost hours: £" + costHours.toFixed(2) + "\n" +
+        "Miles: " + miles.toFixed(2) + "\n" +
+        "Cost miles: £" + costMiles.toFixed(2) + "\n\n" +
+        "Collection Stairs: " + stairsCollection + "\n" +
+        "Via Stairs: " + stairsVia + "\n" +
+        "Delivery Stairs: " + stairsDelivery + "\n" +
+        "Total flights: " + stairsTotal + "\n" +
+        "Cost stairs: £" + costStairs.toFixed(2) + "\n\n" +
+        "TOTAL: £" + total.toFixed(2);
 
-    document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
+      document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
   });
 }
 
-// WhatsApp
 function sendWhatsApp(){
   let name = document.getElementById("name").value;
   let phone = document.getElementById("phone").value;
@@ -226,7 +221,6 @@ ${quote}`;
   window.open("https://wa.me/447846769519?text=" + encodeURIComponent(fullMessage), "_blank");
 }
 
-// Email
 function sendEmail(){
   let name = document.getElementById("name").value;
   let phone = document.getElementById("phone").value;
