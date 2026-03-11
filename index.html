@@ -95,7 +95,6 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <div id="result" class="result"></div>
 </div>
 
-<!-- Pui API KEY-ul tau Google Maps aici -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
@@ -133,11 +132,25 @@ function calculateQuote(){
       waypoints: via ? [{ location: via, stopover: true }] : [],
       travelMode: google.maps.TravelMode.DRIVING
   }, function(result, status){
-      if(status !== 'OK'){ alert("Distance calculation error"); return; }
+      if(status !== 'OK'){
+          // fallback DistanceMatrix pentru a preveni eroarea
+          const distanceService = new google.maps.DistanceMatrixService();
+          distanceService.getDistanceMatrix({
+              origins: [collection],
+              destinations: [delivery],
+              travelMode: google.maps.TravelMode.DRIVING
+          }, function(dmResult, dmStatus){
+              if(dmStatus !== 'OK'){ alert("Distance calculation error. Check addresses."); return; }
+              processDistance(dmResult.rows[0].elements[0].distance.value, dmResult.rows[0].elements[0].duration.value);
+          });
+      } else {
+          const totalMeters = result.routes[0].legs.reduce((sum, leg) => sum + leg.distance.value, 0);
+          const totalSeconds = result.routes[0].legs.reduce((sum, leg) => sum + leg.duration.value, 0);
+          processDistance(totalMeters, totalSeconds);
+      }
+  });
 
-      const totalMeters = result.routes[0].legs.reduce((sum, leg) => sum + leg.distance.value, 0);
-      const totalSeconds = result.routes[0].legs.reduce((sum, leg) => sum + leg.duration.value, 0);
-
+  function processDistance(totalMeters, totalSeconds){
       const miles = totalMeters / 1609.34;
       const costMiles = miles * 1.5;
       const loadingTime = 30 * 60;
@@ -169,9 +182,10 @@ function calculateQuote(){
         "TOTAL: £" + total.toFixed(2);
 
       document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
-  });
+  }
 }
 
+// WhatsApp
 function sendWhatsApp(){
   let name = document.getElementById("name").value;
   let phone = document.getElementById("phone").value;
@@ -221,6 +235,7 @@ ${quote}`;
   window.open("https://wa.me/447846769519?text=" + encodeURIComponent(fullMessage), "_blank");
 }
 
+// Email
 function sendEmail(){
   let name = document.getElementById("name").value;
   let phone = document.getElementById("phone").value;
