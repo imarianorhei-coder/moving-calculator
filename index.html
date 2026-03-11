@@ -27,7 +27,6 @@ box-shadow:0 8px 25px rgba(0,0,0,0.12);
 h1{
 text-align:center;
 color:#0B4DBA;
-margin-bottom:5px;
 }
 
 h2{
@@ -49,7 +48,6 @@ padding:12px;
 margin-top:5px;
 border-radius:6px;
 border:1px solid #ccc;
-font-size:14px;
 }
 
 button{
@@ -58,7 +56,6 @@ padding:15px;
 margin-top:15px;
 border:none;
 border-radius:6px;
-font-size:16px;
 font-weight:600;
 cursor:pointer;
 }
@@ -73,7 +70,6 @@ padding:20px;
 background:#eef5ff;
 border-radius:8px;
 white-space:pre-line;
-line-height:1.5;
 }
 
 </style>
@@ -167,13 +163,14 @@ emailjs.init("UTKviVTwg9BJjYixe");
 
 document.getElementById("moveDate").min=new Date().toISOString().slice(0,16);
 
+let fullMessage="";
 let quoteCalculated=false;
 
 window.onload=function(){
 
-new google.maps.places.Autocomplete(document.getElementById('collection'));
-new google.maps.places.Autocomplete(document.getElementById('via'));
-new google.maps.places.Autocomplete(document.getElementById('delivery'));
+new google.maps.places.Autocomplete(collection);
+new google.maps.places.Autocomplete(via);
+new google.maps.places.Autocomplete(delivery);
 
 }
 
@@ -186,52 +183,40 @@ calculateQuote();
 
 function calculateQuote(){
 
-let rate=parseFloat(document.getElementById("service").value);
+let rate=parseFloat(service.value);
 
-let stairsCollection=parseInt(document.getElementById("stairsCollection").value);
-let stairsVia=parseInt(document.getElementById("stairsVia").value);
-let stairsDelivery=parseInt(document.getElementById("stairsDelivery").value);
+let stairsTotal=parseInt(stairsCollection.value)+parseInt(stairsVia.value)+parseInt(stairsDelivery.value);
 
-let stairsTotal=stairsCollection+stairsVia+stairsDelivery;
+let men=(rate===40?1:rate===70?2:rate===100?3:0);
 
-let numMen=(rate===40?1:rate===70?2:rate===100?3:0);
+let costStairs=stairsTotal*10*men;
 
-let costStairs=stairsTotal*10*numMen;
+const segments=via.value?
+[{origin:collection.value,destination:via.value},{origin:via.value,destination:delivery.value}]
+:[{origin:collection.value,destination:delivery.value}];
 
-const collection=document.getElementById("collection").value;
-const via=document.getElementById("via").value;
-const delivery=document.getElementById("delivery").value;
+let totalMeters=0,totalSeconds=0,done=0;
 
-const segments=via?
-[{origin:collection,destination:via},{origin:via,destination:delivery}]
-:[{origin:collection,destination:delivery}];
+segments.forEach(seg=>{
 
-let totalMeters=0,totalSeconds=0,processed=0;
+new google.maps.DistanceMatrixService().getDistanceMatrix({
 
-segments.forEach(segment=>{
+origins:[seg.origin],
+destinations:[seg.destination],
+travelMode:"DRIVING"
 
-const serviceDM=new google.maps.DistanceMatrixService();
+},function(res,status){
 
-serviceDM.getDistanceMatrix({
+let el=res.rows[0].elements[0];
 
-origins:[segment.origin],
-destinations:[segment.destination],
-travelMode:google.maps.TravelMode.DRIVING
+totalMeters+=el.distance.value;
+totalSeconds+=el.duration.value;
 
-},
+done++;
 
-function(response,status){
+if(done===segments.length){
 
-if(status!=="OK"){alert("Distance error");return;}
-
-totalMeters+=response.rows[0].elements[0].distance.value;
-totalSeconds+=response.rows[0].elements[0].duration.value;
-
-processed++;
-
-if(processed===segments.length){
-
-processDistance(totalMeters,totalSeconds);
+finish(totalMeters,totalSeconds);
 
 }
 
@@ -239,37 +224,47 @@ processDistance(totalMeters,totalSeconds);
 
 });
 
-function processDistance(totalMeters,totalSeconds){
+function finish(meters,seconds){
 
-const miles=totalMeters/1609.34;
-const costMiles=miles*1.5;
+let miles=meters/1609.34;
+let costMiles=miles*1.5;
 
-const stairsTime=stairsTotal*10*60;
+let load=30*60;
 
-let estimatedSeconds=totalSeconds+stairsTime+1800;
+if(rate===35) load=40*60;
+if(rate===40) load=30*60;
+if(rate===70) load=20*60;
+if(rate===100) load=15*60;
 
-let estimatedHours=estimatedSeconds/3600;
-let roundedHours=Math.ceil(estimatedHours*2)/2;
+let stairsTime=stairsTotal*10*60;
 
-if(roundedHours<2)roundedHours=2;
+let totalSeconds=seconds+load+stairsTime;
 
-const costHours=roundedHours*rate;
+let hours=Math.ceil((totalSeconds/3600)*2)/2;
+
+if(hours<2)hours=2;
+
+let costHours=hours*rate;
 
 let congestion=0;
 
-["EC","WC","W1","SW1","SE1"].forEach(zone=>{
-if(collection.toUpperCase().includes(zone)||
-delivery.toUpperCase().includes(zone)||
-via.toUpperCase().includes(zone)){
+["EC","WC","W1","SW1","SE1"].forEach(z=>{
+
+if(collection.value.toUpperCase().includes(z)||
+via.value.toUpperCase().includes(z)||
+delivery.value.toUpperCase().includes(z)){
+
 congestion=18;
+
 }
+
 });
 
 let total=costHours+costMiles+costStairs+congestion;
 
-document.getElementById("result").innerHTML=
+let quote=
 
-`Estimated working time: ${roundedHours}h
+`Estimated working time: ${hours}h
 
 Distance: ${miles.toFixed(2)} miles
 
@@ -280,75 +275,65 @@ Congestion charge: £${congestion}
 
 TOTAL: £${total.toFixed(2)}`;
 
+result.innerText=quote;
+
+fullMessage=`Fast Any Moves Booking
+
+Name: ${name.value}
+Phone: ${phone.value}
+Email: ${email.value}
+
+Move Date: ${moveDate.value}
+
+Service: ${service.options[service.selectedIndex].text}
+
+Collection: ${collection.value}
+Collection Stairs: ${stairsCollection.value}
+
+Via: ${via.value}
+Via Stairs: ${stairsVia.value}
+
+Delivery: ${delivery.value}
+Delivery Stairs: ${stairsDelivery.value}
+
+Additional Info:
+${info.value}
+
+${quote}`;
+
 quoteCalculated=true;
 
 }
 
 }
 
-document.getElementById("whatsappBtn").onclick=function(){
+whatsappBtn.onclick=function(){
 
-if(!quoteCalculated){alert("Please calculate quote first");return;}
+if(!quoteCalculated){alert("Calculate quote first");return;}
 
-let msg=`Fast Any Moves – Booking Request
-
-Name: ${document.getElementById("name").value}
-Phone: ${document.getElementById("phone").value}
-Email: ${document.getElementById("email").value}
-
-Move Date: ${document.getElementById("moveDate").value}
-
-Service: ${document.getElementById("service").options[
-document.getElementById("service").selectedIndex].text}
-
-Collection: ${document.getElementById("collection").value}
-Collection Stairs: ${document.getElementById("stairsCollection").value}
-
-Via: ${document.getElementById("via").value}
-Via Stairs: ${document.getElementById("stairsVia").value}
-
-Delivery: ${document.getElementById("delivery").value}
-Delivery Stairs: ${document.getElementById("stairsDelivery").value}
-
-Additional Info: ${document.getElementById("info").value}
-
-QUOTE
-${document.getElementById("result").innerText}`;
-
-window.open("https://wa.me/447846769519?text="+encodeURIComponent(msg));
+window.open("https://wa.me/447846769519?text="+encodeURIComponent(fullMessage));
 
 }
 
-document.getElementById("emailBtn").onclick=function(){
+emailBtn.onclick=function(){
 
-if(!quoteCalculated){alert("Please calculate quote first");return;}
+if(!quoteCalculated){alert("Calculate quote first");return;}
 
 emailjs.send("service_1e9jyk9","template_0tbv6y9",{
 
-name:document.getElementById("name").value,
-phone:document.getElementById("phone").value,
-email:document.getElementById("email").value,
-move_date:document.getElementById("moveDate").value,
-
-service:document.getElementById("service").options[
-document.getElementById("service").selectedIndex].text,
-
-collection:document.getElementById("collection").value,
-stairs_collection:document.getElementById("stairsCollection").value,
-
-via:document.getElementById("via").value,
-stairs_via:document.getElementById("stairsVia").value,
-
-delivery:document.getElementById("delivery").value,
-stairs_delivery:document.getElementById("stairsDelivery").value,
-
-info:document.getElementById("info").value,
-
-quote_breakdown:document.getElementById("result").innerText
-
-}).then(()=>{
-
-alert("Booking request sent successfully!");
+name:name.value,
+phone:phone.value,
+email:email.value,
+move_date:moveDate.value,
+service:service.options[service.selectedIndex].text,
+collection:collection.value,
+stairs_collection:stairsCollection.value,
+via:via.value,
+stairs_via:stairsVia.value,
+delivery:delivery.value,
+stairs_delivery:stairsDelivery.value,
+info:info.value,
+quote_breakdown:fullMessage
 
 });
 
