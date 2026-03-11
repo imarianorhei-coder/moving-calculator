@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body { font-family: 'Montserrat', Arial, sans-serif; background:#f0f2f5; margin:0; }
-.container { max-width: 780px; margin: 40px auto; background:#fff; padding:30px; border-radius:12px; box-shadow: 0 8px 25px rgba(0,0,0,0.12); }
+.container { max-width: 800px; margin: 40px auto; background:#fff; padding:30px; border-radius:12px; box-shadow: 0 8px 25px rgba(0,0,0,0.12); }
 h1 { text-align:center; color:#0B1F3A; font-size:28px; margin-bottom:5px; }
 h2 { text-align:center; font-weight:400; color:#3A3A3A; font-size:18px; margin-bottom:25px; }
 label { font-weight:600; display:block; margin-top:15px; color:#333; }
@@ -16,10 +16,6 @@ textarea { resize:vertical; }
 button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px; font-size:16px; font-weight:600; cursor:pointer; transition:0.3s; }
 #quoteBtn { background:#0B1F3A; color:#fff; } 
 #quoteBtn:hover { background:#094170; }
-#whatsappBtn { background:#25D366; color:#fff; }
-#whatsappBtn:hover { background:#1DA851; }
-#emailBtn { background:#007bff; color:#fff; margin-top:10px; }
-#emailBtn:hover { background:#0056b3; }
 .result { margin-top:25px; padding:20px; background:#eef5ff; border-radius:8px; font-size:14px; white-space:pre-line; line-height:1.5; color:#0B1F3A; }
 </style>
 </head>
@@ -30,19 +26,12 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <h2>Instant Moving Quote – Help us serve you better</h2>
 
 <form id="quoteForm">
-  <label>Name *</label>
-  <input type="text" id="name" required>
+  <label>Name *</label><input type="text" id="name" required>
+  <label>Phone *</label><input type="text" id="phone" required>
+  <label>Email *</label><input type="email" id="email" required>
+  <label>Move Date *</label><input type="datetime-local" id="moveDate" required>
 
-  <label>Phone *</label>
-  <input type="text" id="phone" required>
-
-  <label>Email *</label>
-  <input type="email" id="email" required>
-
-  <label>Move Date *</label>
-  <input type="datetime-local" id="moveDate" required>
-
-  <label>Do you need help with loading and unloading? *</label>
+  <label>Service *</label>
   <select id="service" required>
     <option value="">Select</option>
     <option value="35">No help required + Medium Van</option>
@@ -51,10 +40,12 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
     <option value="100">3 Men + Medium Van</option>
   </select>
 
-  <label>Collection Address *</label>
-  <input type="text" id="collection" placeholder="Full address including postcode" required>
-  <label>Collection Stairs</label>
-  <select id="stairsCollection">
+  <h3>Collection Address *</h3>
+  <label>Number/Name</label><input type="text" id="collection_num" required>
+  <label>Street</label><input type="text" id="collection_street" required>
+  <label>City</label><input type="text" id="collection_city" required>
+  <label>Postcode</label><input type="text" id="collection_postcode" required>
+  <label>Stairs</label><select id="stairsCollection">
     <option value="0">Ground floor / Lift</option>
     <option value="1">1 Flight</option>
     <option value="2">2 Flights</option>
@@ -62,10 +53,12 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
     <option value="4">4 Flights</option>
   </select>
 
-  <label>Via Address (optional)</label>
-  <input type="text" id="via" placeholder="Full address including postcode">
-  <label>Via Stairs</label>
-  <select id="stairsVia">
+  <h3>Via Address (optional)</h3>
+  <label>Number/Name</label><input type="text" id="via_num">
+  <label>Street</label><input type="text" id="via_street">
+  <label>City</label><input type="text" id="via_city">
+  <label>Postcode</label><input type="text" id="via_postcode">
+  <label>Stairs</label><select id="stairsVia">
     <option value="0">Ground floor / Lift</option>
     <option value="1">1 Flight</option>
     <option value="2">2 Flights</option>
@@ -73,10 +66,12 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
     <option value="4">4 Flights</option>
   </select>
 
-  <label>Delivery Address *</label>
-  <input type="text" id="delivery" placeholder="Full address including postcode" required>
-  <label>Delivery Stairs</label>
-  <select id="stairsDelivery">
+  <h3>Delivery Address *</h3>
+  <label>Number/Name</label><input type="text" id="delivery_num" required>
+  <label>Street</label><input type="text" id="delivery_street" required>
+  <label>City</label><input type="text" id="delivery_city" required>
+  <label>Postcode</label><input type="text" id="delivery_postcode" required>
+  <label>Stairs</label><select id="stairsDelivery">
     <option value="0">Ground floor / Lift</option>
     <option value="1">1 Flight</option>
     <option value="2">2 Flights</option>
@@ -84,130 +79,124 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
     <option value="4">4 Flights</option>
   </select>
 
-  <label>Additional Information</label>
-  <textarea id="info"></textarea>
+  <label>Additional Information</label><textarea id="info"></textarea>
 
   <button type="submit" id="quoteBtn">Get My Instant Quote</button>
-  <button type="button" id="whatsappBtn" onclick="sendWhatsApp()">Send via WhatsApp</button>
-  <button type="button" id="emailBtn" onclick="sendEmail()">Send via Email</button>
 </form>
 
 <div id="result" class="result"></div>
 </div>
 
+<!-- GOOGLE API KEY: înlocuiește aici cu cheia ta -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
-<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-<script>
-emailjs.init("UTKviVTwg9BJjYixe");
 
+<script>
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
-let collectionAuto = new google.maps.places.Autocomplete(document.getElementById('collection'));
-let viaAuto = new google.maps.places.Autocomplete(document.getElementById('via'));
-let deliveryAuto = new google.maps.places.Autocomplete(document.getElementById('delivery'));
+function isFieldFilled(input){ return input.value.trim().length>0; }
+function getFullAddress(num, street, city, postcode){ return num.trim()+", "+street.trim()+", "+city.trim()+", "+postcode.trim()+", UK"; }
 
 document.getElementById("quoteForm").addEventListener("submit", function(e){
-  e.preventDefault();
-  calculateQuote();
-});
+    e.preventDefault();
 
-// Validare minimală full address
-function validateFullAddress(input){
-  const value = input.value.trim();
-  const postcodeRegex = /[A-Z]{1,2}\d{1,2}[A-Z]?\s*\d[A-Z]{2}/i;
-  const hasNumber = /\d/.test(value);
-  return value.length>5 && hasNumber && postcodeRegex.test(value);
-}
+    ['collection_num','collection_street','collection_city','collection_postcode',
+     'via_num','via_street','via_city','via_postcode',
+     'delivery_num','delivery_street','delivery_city','delivery_postcode'].forEach(id=>document.getElementById(id).classList.remove('invalid'));
 
-function calculateQuote(){
-  let rate = parseFloat(document.getElementById("service").value);
-  let stairsCollection = parseInt(document.getElementById("stairsCollection").value);
-  let stairsVia = parseInt(document.getElementById("stairsVia").value);
-  let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
-  let stairsTotal = stairsCollection + stairsVia + stairsDelivery;
-  let numMen = (rate===40 ? 1 : rate===70 ? 2 : rate===100 ? 3 : 0);
-  let costStairs = rate!==35 ? stairsTotal*10*numMen : 0;
+    let errors = [];
 
-  // Reset highlight
-  ['collection','via','delivery'].forEach(id=>document.getElementById(id).classList.remove('invalid'));
+    ['collection_num','collection_street','collection_city','collection_postcode'].forEach(id=>{
+        if(!isFieldFilled(document.getElementById(id))){ document.getElementById(id).classList.add('invalid'); errors.push("Collection address incomplete"); }});
+    ['delivery_num','delivery_street','delivery_city','delivery_postcode'].forEach(id=>{
+        if(!isFieldFilled(document.getElementById(id))){ document.getElementById(id).classList.add('invalid'); errors.push("Delivery address incomplete"); }});
 
-  let errors = [];
-  if(!validateFullAddress(document.getElementById('collection'))){
-    document.getElementById('collection').classList.add('invalid');
-    errors.push("Collection must be a full valid address (number + postcode).");
-  }
-  if(document.getElementById('via').value && !validateFullAddress(document.getElementById('via'))){
-    document.getElementById('via').classList.add('invalid');
-    errors.push("Via must be a full valid address (number + postcode).");
-  }
-  if(!validateFullAddress(document.getElementById('delivery'))){
-    document.getElementById('delivery').classList.add('invalid');
-    errors.push("Delivery must be a full valid address (number + postcode).");
-  }
-  if(errors.length>0){
-    alert(errors.join("\n"));
-    // dar nu oprim restul fluxului, client poate corecta
-  }
+    let viaFilled = ['via_num','via_street','via_city','via_postcode'].some(id=>isFieldFilled(document.getElementById(id)));
+    if(viaFilled){['via_num','via_street','via_city','via_postcode'].forEach(id=>{
+        if(!isFieldFilled(document.getElementById(id))){ document.getElementById(id).classList.add('invalid'); errors.push("Via address incomplete"); }});
+    }
 
-  const collection = document.getElementById('collection').value;
-  const via = document.getElementById('via').value;
-  const delivery = document.getElementById('delivery').value;
+    if(errors.length>0){ alert([...new Set(errors)].join("\n")); return; }
 
-  const segments = via ? [{origin:collection,destination:via},{origin:via,destination:delivery}] : [{origin:collection,destination:delivery}];
+    const collectionFull = getFullAddress(
+        document.getElementById('collection_num').value,
+        document.getElementById('collection_street').value,
+        document.getElementById('collection_city').value,
+        document.getElementById('collection_postcode').value
+    );
 
-  let totalMeters=0, totalSeconds=0, processed=0;
-  segments.forEach(segment=>{
-    const serviceDM = new google.maps.DistanceMatrixService();
-    serviceDM.getDistanceMatrix({
-      origins:[segment.origin],
-      destinations:[segment.destination],
-      travelMode: google.maps.TravelMode.DRIVING
-    }, function(response,status){
-      if(status!=="OK"){ alert("Distance calculation error. Check addresses."); return; }
-      totalMeters += response.rows[0].elements[0].distance.value;
-      totalSeconds += response.rows[0].elements[0].duration.value;
-      processed++;
-      if(processed===segments.length) processDistance(totalMeters,totalSeconds);
+    const viaFull = viaFilled ? getFullAddress(
+        document.getElementById('via_num').value,
+        document.getElementById('via_street').value,
+        document.getElementById('via_city').value,
+        document.getElementById('via_postcode').value
+    ) : null;
+
+    const deliveryFull = getFullAddress(
+        document.getElementById('delivery_num').value,
+        document.getElementById('delivery_street').value,
+        document.getElementById('delivery_city').value,
+        document.getElementById('delivery_postcode').value
+    );
+
+    const segments = viaFull ? [{origin:collectionFull,destination:viaFull},{origin:viaFull,destination:deliveryFull}] : [{origin:collectionFull,destination:deliveryFull}];
+
+    let totalMeters=0,totalSeconds=0,processed=0;
+    segments.forEach(segment=>{
+        const serviceDM = new google.maps.DistanceMatrixService();
+        serviceDM.getDistanceMatrix({
+            origins:[segment.origin],
+            destinations:[segment.destination],
+            travelMode: google.maps.TravelMode.DRIVING
+        }, function(response,status){
+            if(status!=="OK"){ alert("Distance calculation error. Check addresses."); return; }
+            totalMeters += response.rows[0].elements[0].distance.value;
+            totalSeconds += response.rows[0].elements[0].duration.value;
+            processed++;
+            if(processed===segments.length) processDistance(totalMeters,totalSeconds);
+        });
     });
-  });
 
-  function processDistance(totalMeters,totalSeconds){
-    const miles = totalMeters/1609.34;
-    const costMiles = miles*1.5;
-    const loadingTime = 30*60;
-    const stairsTime = stairsTotal*10*60;
-    const estimatedSeconds = totalSeconds+loadingTime+stairsTime;
+    function processDistance(totalMeters,totalSeconds){
+        const rate = parseFloat(document.getElementById("service").value);
+        const stairsCollection = parseInt(document.getElementById("stairsCollection").value);
+        const stairsVia = parseInt(document.getElementById("stairsVia").value);
+        const stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
+        const stairsTotal = stairsCollection+stairsVia+stairsDelivery;
+        const numMen = (rate===40?1:rate===70?2:rate===100?3:0);
+        const costStairs = rate!==35?stairsTotal*10*numMen:0;
 
-    let estimatedHours = estimatedSeconds/3600;
-    let roundedHours = Math.ceil(estimatedHours*2)/2;
-    if(roundedHours<2) roundedHours=2;
-    const costHours = roundedHours*rate;
-    const total = costHours + costMiles + costStairs;
+        const miles = totalMeters/1609.34;
+        const costMiles = miles*1.5;
+        const loadingTime = 30*60;
+        const stairsTime = stairsTotal*10*60;
+        const estimatedSeconds = totalSeconds + loadingTime + stairsTime;
 
-    const finalHours = Math.floor(estimatedSeconds/3600);
-    const finalMinutes = Math.round((estimatedSeconds%3600)/60);
+        let estimatedHours = estimatedSeconds/3600;
+        let roundedHours = Math.ceil(estimatedHours*2)/2;
+        if(roundedHours<2) roundedHours=2;
+        const costHours = roundedHours*rate;
+        const total = costHours + costMiles + costStairs;
 
-    let breakdown = 
-      "Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
-      "Hours charged (rounded): "+roundedHours+"\n"+
-      "After reserved hours, any extra time will be charged at half-hour increments at the rate selected.\n\n"+
-      "Cost hours: £"+costHours.toFixed(2)+"\n"+
-      "Miles: "+miles.toFixed(2)+"\n"+
-      "Cost miles: £"+costMiles.toFixed(2)+"\n\n"+
-      "Collection Stairs: "+stairsCollection+"\n"+
-      "Via Stairs: "+stairsVia+"\n"+
-      "Delivery Stairs: "+stairsDelivery+"\n"+
-      "Total flights: "+stairsTotal+"\n"+
-      "Cost stairs: £"+costStairs.toFixed(2)+"\n\n"+
-      "TOTAL: £"+total.toFixed(2);
+        const finalHours = Math.floor(estimatedSeconds/3600);
+        const finalMinutes = Math.round((estimatedSeconds%3600)/60);
 
-    document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
-  }
-}
+        let breakdown =
+            "Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
+            "Hours charged (rounded): "+roundedHours+"\n"+
+            "After reserved hours, any extra time will be charged at half-hour increments at the rate selected.\n\n"+
+            "Cost hours: £"+costHours.toFixed(2)+"\n"+
+            "Miles: "+miles.toFixed(2)+"\n"+
+            "Cost miles: £"+costMiles.toFixed(2)+"\n\n"+
+            "Collection Stairs: "+stairsCollection+"\n"+
+            "Via Stairs: "+stairsVia+"\n"+
+            "Delivery Stairs: "+stairsDelivery+"\n"+
+            "Total flights: "+stairsTotal+"\n"+
+            "Cost stairs: £"+costStairs.toFixed(2)+"\n\n"+
+            "TOTAL: £"+total.toFixed(2);
 
-function sendWhatsApp(){/* cod existent */}  
-function sendEmail(){/* cod existent */}
-
+        document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
+    }
+});
 </script>
 </body>
 </html>
