@@ -100,18 +100,24 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <script>
 emailjs.init("UTKviVTwg9BJjYixe");
 
-let collectionAuto, viaAuto, deliveryAuto;
+document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
-window.onload = function(){
-  collectionAuto = new google.maps.places.Autocomplete(document.getElementById('collection'));
-  viaAuto = new google.maps.places.Autocomplete(document.getElementById('via'));
-  deliveryAuto = new google.maps.places.Autocomplete(document.getElementById('delivery'));
-};
+let collectionAuto = new google.maps.places.Autocomplete(document.getElementById('collection'));
+let viaAuto = new google.maps.places.Autocomplete(document.getElementById('via'));
+let deliveryAuto = new google.maps.places.Autocomplete(document.getElementById('delivery'));
 
 document.getElementById("quoteForm").addEventListener("submit", function(e){
   e.preventDefault();
   calculateQuote();
 });
+
+function validateFullAddress(input){
+    // minimal: verificăm că are cel puțin un număr și un cod poștal
+    const value = input.value.trim();
+    const postcodeRegex = /[A-Z]{1,2}\d{1,2}[A-Z]?\s*\d[A-Z]{2}/i;
+    const hasNumber = /\d/.test(value);
+    return value.length>5 && hasNumber && postcodeRegex.test(value);
+}
 
 function calculateQuote(){
   let rate = parseFloat(document.getElementById("service").value);
@@ -120,106 +126,89 @@ function calculateQuote(){
   let stairsDelivery = parseInt(document.getElementById("stairsDelivery").value);
   let stairsTotal = stairsCollection + stairsVia + stairsDelivery;
   let numMen = (rate===40 ? 1 : rate===70 ? 2 : rate===100 ? 3 : 0);
-  let costStairs = rate!==35 ? stairsTotal * 10 * numMen : 0;
+  let costStairs = rate!==35 ? stairsTotal*10*numMen : 0;
 
-  // Resetează stilul câmpurilor
-  document.getElementById('collection').classList.remove('invalid');
-  document.getElementById('via').classList.remove('invalid');
-  document.getElementById('delivery').classList.remove('invalid');
+  // resetare stil
+  ['collection','via','delivery'].forEach(id=>document.getElementById(id).classList.remove('invalid'));
 
-  const collectionPlace = collectionAuto.getPlace();
-  const deliveryPlace = deliveryAuto.getPlace();
-  const viaPlace = via ? viaAuto.getPlace() : true;
-
-  let errorMsg = [];
-  if(!collectionPlace || !collectionPlace.geometry){ 
+  // validare minimală full address
+  let errors = [];
+  if(!validateFullAddress(document.getElementById('collection'))){ 
     document.getElementById('collection').classList.add('invalid');
-    errorMsg.push("Collection must be a full valid address.");
+    errors.push("Collection must be a full valid address (number + postcode).");
   }
-  if(!deliveryPlace || !deliveryPlace.geometry){
-    document.getElementById('delivery').classList.add('invalid');
-    errorMsg.push("Delivery must be a full valid address.");
-  }
-  if(via && (!viaPlace || !viaPlace.geometry)){
+  if(document.getElementById('via').value && !validateFullAddress(document.getElementById('via'))){
     document.getElementById('via').classList.add('invalid');
-    errorMsg.push("Via must be a full valid address.");
+    errors.push("Via must be a full valid address (number + postcode).");
   }
-  if(errorMsg.length>0){
-    alert(errorMsg.join("\n"));
+  if(!validateFullAddress(document.getElementById('delivery'))){
+    document.getElementById('delivery').classList.add('invalid');
+    errors.push("Delivery must be a full valid address (number + postcode).");
+  }
+  if(errors.length>0){
+    alert(errors.join("\n"));
     return;
   }
 
-  const collection = document.getElementById("collection").value;
-  const via = document.getElementById("via").value;
-  const delivery = document.getElementById("delivery").value;
+  const collection = document.getElementById('collection').value;
+  const via = document.getElementById('via').value;
+  const delivery = document.getElementById('delivery').value;
 
-  const segments = [];
-  if(via){
-    segments.push({origin: collection, destination: via});
-    segments.push({origin: via, destination: delivery});
-  } else {
-    segments.push({origin: collection, destination: delivery});
-  }
+  const segments = via ? [{origin:collection,destination:via},{origin:via,destination:delivery}] : [{origin:collection,destination:delivery}];
 
-  let totalMeters = 0;
-  let totalSeconds = 0;
-  let processed = 0;
-
-  segments.forEach(segment => {
+  let totalMeters=0, totalSeconds=0, processed=0;
+  segments.forEach(segment=>{
     const serviceDM = new google.maps.DistanceMatrixService();
     serviceDM.getDistanceMatrix({
-      origins: [segment.origin],
-      destinations: [segment.destination],
+      origins:[segment.origin],
+      destinations:[segment.destination],
       travelMode: google.maps.TravelMode.DRIVING
-    }, function(response, status){
-      if(status !== 'OK'){ alert("Distance calculation error. Check addresses."); return; }
+    }, function(response,status){
+      if(status!=="OK"){ alert("Distance calculation error. Check addresses."); return; }
       totalMeters += response.rows[0].elements[0].distance.value;
       totalSeconds += response.rows[0].elements[0].duration.value;
       processed++;
-      if(processed === segments.length){
-        processDistance(totalMeters, totalSeconds);
-      }
+      if(processed===segments.length) processDistance(totalMeters,totalSeconds);
     });
   });
 
-  function processDistance(totalMeters, totalSeconds){
-    const miles = totalMeters / 1609.34;
-    const costMiles = miles * 1.5;
+  function processDistance(totalMeters,totalSeconds){
+    const miles = totalMeters/1609.34;
+    const costMiles = miles*1.5;
     const loadingTime = 30*60;
     const stairsTime = stairsTotal*10*60;
-    const estimatedSeconds = totalSeconds + loadingTime + stairsTime;
+    const estimatedSeconds = totalSeconds+loadingTime+stairsTime;
 
-    let estimatedHours = estimatedSeconds / 3600;
+    let estimatedHours = estimatedSeconds/3600;
     let roundedHours = Math.ceil(estimatedHours*2)/2;
-    if(roundedHours < 2) roundedHours = 2;
-
-    const costHours = roundedHours * rate;
+    if(roundedHours<2) roundedHours=2;
+    const costHours = roundedHours*rate;
     const total = costHours + costMiles + costStairs;
 
     const finalHours = Math.floor(estimatedSeconds/3600);
     const finalMinutes = Math.round((estimatedSeconds%3600)/60);
 
-    let breakdown =
-      "Estimated working time: " + finalHours + "h " + finalMinutes + "m\n" +
-      "Hours charged (rounded): " + roundedHours + "\n" +
-      "After reserved hours, any extra time will be charged at half-hour increments at the rate selected.\n\n" +
-      "Cost hours: £" + costHours.toFixed(2) + "\n" +
-      "Miles: " + miles.toFixed(2) + "\n" +
-      "Cost miles: £" + costMiles.toFixed(2) + "\n\n" +
-      "Collection Stairs: " + stairsCollection + "\n" +
-      "Via Stairs: " + stairsVia + "\n" +
-      "Delivery Stairs: " + stairsDelivery + "\n" +
-      "Total flights: " + stairsTotal + "\n" +
-      "Cost stairs: £" + costStairs.toFixed(2) + "\n\n" +
-      "TOTAL: £" + total.toFixed(2);
+    let breakdown = 
+      "Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
+      "Hours charged (rounded): "+roundedHours+"\n"+
+      "After reserved hours, any extra time will be charged at half-hour increments at the rate selected.\n\n"+
+      "Cost hours: £"+costHours.toFixed(2)+"\n"+
+      "Miles: "+miles.toFixed(2)+"\n"+
+      "Cost miles: £"+costMiles.toFixed(2)+"\n\n"+
+      "Collection Stairs: "+stairsCollection+"\n"+
+      "Via Stairs: "+stairsVia+"\n"+
+      "Delivery Stairs: "+stairsDelivery+"\n"+
+      "Total flights: "+stairsTotal+"\n"+
+      "Cost stairs: £"+costStairs.toFixed(2)+"\n\n"+
+      "TOTAL: £"+total.toFixed(2);
 
     document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
   }
 }
 
-// WhatsApp & EmailJS
 function sendWhatsApp(){/* cod existent */}  
 function sendEmail(){/* cod existent */}
+
 </script>
 </body>
 </html>
