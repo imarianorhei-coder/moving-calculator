@@ -14,7 +14,7 @@ label{font-weight:600; display:block; margin-top:15px; color:#333;}
 input, select, textarea{width:100%; padding:12px; margin-top:5px; border-radius:6px; border:1px solid #ccc; font-size:14px;}
 textarea{resize:vertical;}
 button{width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px; font-size:16px; font-weight:600; cursor:pointer; transition:0.3s;}
-#quoteBtn{background:#0B1F3A;color:#fff;}
+#quoteBtn{background:#0B1F3A;color:#fff;} 
 #quoteBtn:hover{background:#094170;}
 #whatsappBtn{background:#25D366;color:#fff;margin-top:10px;}
 #whatsappBtn:hover{background:#1DA851;}
@@ -55,7 +55,7 @@ button{width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px
 
 <label>Additional Information</label><textarea id="info"></textarea>
 
-<button type="submit" id="quoteBtn">Get My Instant Quote</button>
+<button type="button" id="quoteBtn">Get My Instant Quote</button>
 <button type="button" id="whatsappBtn">Send via WhatsApp</button>
 <button type="button" id="emailBtn">Send via Email</button>
 </form>
@@ -68,7 +68,7 @@ button{width:100%; padding:15px; margin-top:20px; border:none; border-radius:6px
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 
 <script>
-// EmailJS init – pui doar cheile tale
+// Initialize EmailJS – doar pui cheile tale
 emailjs.init("UTKviVTwg9BJjYixe");
 
 let collectionAuto, viaAuto, deliveryAuto;
@@ -80,8 +80,19 @@ deliveryAuto = new google.maps.places.Autocomplete(document.getElementById('deli
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
-document.getElementById("quoteForm").addEventListener("submit", function(e){
-e.preventDefault(); calculateQuote();
+let quoteCalculated = false;
+
+document.getElementById("quoteBtn").addEventListener("click", function() {
+    calculateQuote();
+});
+
+document.getElementById("whatsappBtn").addEventListener("click", function(){
+    if(!quoteCalculated){ alert("Please calculate quote first."); return;}
+    sendWhatsApp();
+});
+document.getElementById("emailBtn").addEventListener("click", function(){
+    if(!quoteCalculated){ alert("Please calculate quote first."); return;}
+    sendEmail();
 });
 
 function calculateQuote(){
@@ -116,7 +127,10 @@ if(status!=="OK"){alert("Distance calculation error"); return;}
 totalMeters+=response.rows[0].elements[0].distance.value;
 totalSeconds+=response.rows[0].elements[0].duration.value;
 processed++;
-if(processed===segments.length) displayBreakdown(totalMeters,totalSeconds);
+if(processed===segments.length){
+displayBreakdown(totalMeters,totalSeconds);
+quoteCalculated = true;
+}
 });
 });
 
