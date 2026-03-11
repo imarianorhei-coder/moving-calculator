@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body { font-family: 'Montserrat', Arial, sans-serif; background:#f0f2f5; margin:0; }
-.container { max-width: 800px; margin: 40px auto; background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 25px rgba(0,0,0,0.12);}
+.container { max-width: 800px; margin:40px auto; background:#fff; padding:30px; border-radius:12px; box-shadow:0 8px 25px rgba(0,0,0,0.12);}
 h1 { text-align:center; color:#0B1F3A; font-size:28px; margin-bottom:5px;}
 h2 { text-align:center; font-weight:400; color:#3A3A3A; font-size:18px; margin-bottom:25px;}
 label { font-weight:600; display:block; margin-top:15px; color:#333;}
@@ -96,62 +96,93 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 </div>
 
 <!-- Google API Key -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=&AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac libraries=places" async defer></script>
 
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 
 <script>
-emailjs.init("YOUR_EMAILJS_PUBLIC_KEY"); // doar daca vrei sa folosesti email, altfel poti lasa
+emailjs.init("YOUR_EMAILJS_PUBLIC_KEY"); // doar daca vrei sa folosesti EmailJS
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
 
 function isFieldFilled(input){ return input.value.trim().length>0; }
 function getFullAddress(num, street, city, postcode){ return num.trim()+", "+street.trim()+", "+city.trim()+", "+postcode.trim()+", UK"; }
 
-function calculateQuote(){
-    const collectionFull = getFullAddress(document.getElementById('collection_num').value,
-        document.getElementById('collection_street').value,
-        document.getElementById('collection_city').value,
-        document.getElementById('collection_postcode').value);
-
-    const viaFilled = ['via_num','via_street','via_city','via_postcode'].some(id=>isFieldFilled(document.getElementById(id)));
-    const viaFull = viaFilled ? getFullAddress(document.getElementById('via_num').value,
-        document.getElementById('via_street').value,
-        document.getElementById('via_city').value,
-        document.getElementById('via_postcode').value) : null;
-
-    const deliveryFull = getFullAddress(document.getElementById('delivery_num').value,
-        document.getElementById('delivery_street').value,
-        document.getElementById('delivery_city').value,
-        document.getElementById('delivery_postcode').value);
-
-    return {collectionFull, viaFull, deliveryFull, viaFilled};
-}
-
 document.getElementById("quoteForm").addEventListener("submit", function(e){
-    e.preventDefault();
-    const {collectionFull, viaFull, deliveryFull, viaFilled} = calculateQuote();
+e.preventDefault();
 
-    const segments = viaFull ? [{origin:collectionFull,destination:viaFull},{origin:viaFull,destination:deliveryFull}] : [{origin:collectionFull,destination:deliveryFull}];
-    let totalMeters=0,totalSeconds=0,processed=0;
-    segments.forEach(segment=>{
-        const serviceDM = new google.maps.DistanceMatrixService();
-        serviceDM.getDistanceMatrix({
-            origins:[segment.origin],
-            destinations:[segment.destination],
-            travelMode: google.maps.TravelMode.DRIVING
-        }, function(response,status){
-            if(status!=="OK"){ alert("Distance calculation error. Check addresses."); return; }
-            totalMeters += response.rows[0].elements[0].distance.value;
-            totalSeconds += response.rows[0].elements[0].duration.value;
-            processed++;
-            if(processed===segments.length){
-                // aici poti calcula ore, costuri, stairs si afisa in #result
-                document.getElementById("result").innerHTML =
-                    "Miles: "+(totalMeters/1609.34).toFixed(2)+" mi<br>"+
-                    "Time: "+Math.round(totalSeconds/60)+" min";
-            }
-        });
-    });
+// validare completă
+let errors = [];
+['collection_num','collection_street','collection_city','collection_postcode',
+'delivery_num','delivery_street','delivery_city','delivery_postcode'].forEach(id=>{
+if(!isFieldFilled(document.getElementById(id))){document.getElementById(id).classList.add('invalid'); errors.push(id+" incomplete");}});
+let viaFilled = ['via_num','via_street','via_city','via_postcode'].some(id=>isFieldFilled(document.getElementById(id)));
+if(viaFilled){
+['via_num','via_street','via_city','via_postcode'].forEach(id=>{
+if(!isFieldFilled(document.getElementById(id))){document.getElementById(id).classList.add('invalid'); errors.push(id+" incomplete");}});
+}
+if(errors.length>0){alert(errors.join("\n")); return;}
+
+const collectionFull = getFullAddress(document.getElementById('collection_num').value,
+document.getElementById('collection_street').value,
+document.getElementById('collection_city').value,
+document.getElementById('collection_postcode').value);
+const viaFull = viaFilled ? getFullAddress(document.getElementById('via_num').value,
+document.getElementById('via_street').value,
+document.getElementById('via_city').value,
+document.getElementById('via_postcode').value) : null;
+const deliveryFull = getFullAddress(document.getElementById('delivery_num').value,
+document.getElementById('delivery_street').value,
+document.getElementById('delivery_city').value,
+document.getElementById('delivery_postcode').value);
+
+const segments = viaFull ? [{origin:collectionFull,destination:viaFull},{origin:viaFull,destination:deliveryFull}] : [{origin:collectionFull,destination:deliveryFull}];
+
+let totalMeters=0,totalSeconds=0,processed=0;
+segments.forEach(segment=>{
+const serviceDM = new google.maps.DistanceMatrixService();
+serviceDM.getDistanceMatrix({origins:[segment.origin], destinations:[segment.destination], travelMode: google.maps.TravelMode.DRIVING}, function(response,status){
+if(status!=="OK"){alert("Distance calculation error"); return;}
+totalMeters += response.rows[0].elements[0].distance.value;
+totalSeconds += response.rows[0].elements[0].duration.value;
+processed++;
+if(processed===segments.length){
+let rate=parseFloat(document.getElementById("service").value);
+let stairsCollection=parseInt(document.getElementById("stairsCollection").value);
+let stairsVia=parseInt(document.getElementById("stairsVia").value);
+let stairsDelivery=parseInt(document.getElementById("stairsDelivery").value);
+let stairsTotal=stairsCollection+stairsVia+stairsDelivery;
+let numMen=(rate===40?1:rate===70?2:rate===100?3:0);
+let costStairs=rate!==35?stairsTotal*10*numMen:0;
+
+let miles=totalMeters/1609.34;
+let costMiles=miles*1.5;
+let loadingTime=30*60;
+let stairsTime=stairsTotal*10*60;
+let estimatedSeconds=totalSeconds+loadingTime+stairsTime;
+let estimatedHours=estimatedSeconds/3600;
+let roundedHours=Math.ceil(estimatedHours*2)/2;
+if(roundedHours<2) roundedHours=2;
+let costHours=roundedHours*rate;
+let total=costHours+costMiles+costStairs;
+
+let finalHours=Math.floor(estimatedSeconds/3600);
+let finalMinutes=Math.round((estimatedSeconds%3600)/60);
+
+let breakdown="Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
+"Hours charged (rounded): "+roundedHours+"\n"+
+"Cost hours: £"+costHours.toFixed(2)+"\n"+
+"Miles: "+miles.toFixed(2)+"\n"+
+"Cost miles: £"+costMiles.toFixed(2)+"\n"+
+"Collection Stairs: "+stairsCollection+"\n"+
+"Via Stairs: "+stairsVia+"\n"+
+"Delivery Stairs: "+stairsDelivery+"\n"+
+"Cost stairs: £"+costStairs.toFixed(2)+"\n"+
+"TOTAL: £"+total.toFixed(2);
+
+document.getElementById("result").innerHTML=breakdown.replace(/\n/g,"<br>");
+
+// aici poti adauga codul pentru WhatsApp si Email
+}});});
 });
 </script>
