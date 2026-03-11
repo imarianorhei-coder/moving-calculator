@@ -32,13 +32,10 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <form id="quoteForm">
   <label>Name *</label>
   <input type="text" id="name" required>
-
   <label>Phone *</label>
   <input type="text" id="phone" required>
-
   <label>Email *</label>
   <input type="email" id="email" required>
-
   <label>Move Date *</label>
   <input type="datetime-local" id="moveDate" required>
 
@@ -98,11 +95,12 @@ button { width:100%; padding:15px; margin-top:20px; border:none; border-radius:6
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDex0iuSIdBsP21VWQJxws0dlpUj9heWac&libraries=places" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
-// EmailJS init – deja setat
+// --- EmailJS Init ---
 emailjs.init("UTKviVTwg9BJjYixe");
 const SERVICE_ID = "service_1e9jyk9";
 const TEMPLATE_ID = "template_0tbv6y9";
 
+// --- Google Places Autocomplete ---
 let collectionAuto, viaAuto, deliveryAuto;
 window.onload = function(){
   collectionAuto = new google.maps.places.Autocomplete(document.getElementById('collection'));
@@ -111,13 +109,14 @@ window.onload = function(){
 };
 
 document.getElementById("moveDate").min = new Date().toISOString().slice(0,16);
-let quoteCalculated = false;
 
 document.getElementById("quoteForm").addEventListener("submit", function(e){
   e.preventDefault();
   calculateQuote();
 });
 
+// --- Quote Calculation (exisiting code intact) ---
+let quoteCalculated = false;
 function calculateQuote(){
   let rate = parseFloat(document.getElementById("service").value);
   let stairsCollection = parseInt(document.getElementById("stairsCollection").value);
@@ -131,22 +130,14 @@ function calculateQuote(){
   let via = document.getElementById("via").value;
   let delivery = document.getElementById("delivery").value;
 
+  // Verify addresses
   if(!collectionAuto.getPlace() || !deliveryAuto.getPlace() || (via && !viaAuto.getPlace())){
     alert("Please select valid addresses from the dropdown for collection, via (if used), and delivery.");
     return;
   }
 
-  const segments = [];
-  if(via){
-    segments.push({origin: collection, destination: via});
-    segments.push({origin: via, destination: delivery});
-  } else {
-    segments.push({origin: collection, destination: delivery});
-  }
-
-  let totalMeters = 0;
-  let totalSeconds = 0;
-  let processed = 0;
+  const segments = via ? [{origin: collection, destination: via},{origin: via, destination: delivery}] : [{origin: collection, destination: delivery}];
+  let totalMeters = 0, totalSeconds = 0, processed = 0;
 
   segments.forEach(segment => {
     const serviceDM = new google.maps.DistanceMatrixService();
@@ -155,13 +146,11 @@ function calculateQuote(){
       destinations: [segment.destination],
       travelMode: google.maps.TravelMode.DRIVING
     }, function(response, status){
-      if(status !== 'OK'){ alert("Distance calculation error. Check addresses."); return; }
+      if(status !== 'OK'){ alert("Distance calculation error."); return; }
       totalMeters += response.rows[0].elements[0].distance.value;
       totalSeconds += response.rows[0].elements[0].duration.value;
       processed++;
-      if(processed === segments.length){
-        displayBreakdown(totalMeters, totalSeconds);
-      }
+      if(processed === segments.length) displayBreakdown(totalMeters, totalSeconds);
     });
   });
 
@@ -171,61 +160,94 @@ function calculateQuote(){
     const loadingTime = 30*60;
     const stairsTime = stairsTotal*10*60;
     const estimatedSeconds = totalSeconds + loadingTime + stairsTime;
-
-    let estimatedHours = estimatedSeconds / 3600;
+    let estimatedHours = estimatedSeconds/3600;
     let roundedHours = Math.ceil(estimatedHours*2)/2;
-    if(roundedHours < 2) roundedHours = 2;
-
+    if(roundedHours < 2) roundedHours=2;
     const costHours = roundedHours * rate;
     const total = costHours + costMiles + costStairs;
 
     const finalHours = Math.floor(estimatedSeconds/3600);
     const finalMinutes = Math.round((estimatedSeconds%3600)/60);
 
-    let breakdown =
-      "Estimated working time: " + finalHours + "h " + finalMinutes + "m\n" +
-      "Hours charged (rounded): " + roundedHours + "\n" +
-      "Cost hours: £" + costHours.toFixed(2) + "\n" +
-      "Miles: " + miles.toFixed(2) + "\n" +
-      "Cost miles: £" + costMiles.toFixed(2) + "\n\n" +
-      "Collection Stairs: " + stairsCollection + "\n" +
-      "Via Stairs: " + stairsVia + "\n" +
-      "Delivery Stairs: " + stairsDelivery + "\n" +
-      "Total flights: " + stairsTotal + "\n" +
-      "Cost stairs: £" + costStairs.toFixed(2) + "\n\n" +
-      "TOTAL: £" + total.toFixed(2);
-
+    let breakdown = "Estimated working time: "+finalHours+"h "+finalMinutes+"m\n"+
+                    "Hours charged (rounded): "+roundedHours+"\n"+
+                    "Cost hours: £"+costHours.toFixed(2)+"\n"+
+                    "Miles: "+miles.toFixed(2)+"\n"+
+                    "Cost miles: £"+costMiles.toFixed(2)+"\n"+
+                    "Collection Stairs: "+stairsCollection+"\n"+
+                    "Via Stairs: "+stairsVia+"\n"+
+                    "Delivery Stairs: "+stairsDelivery+"\n"+
+                    "Cost stairs: £"+costStairs.toFixed(2)+"\n"+
+                    "TOTAL: £"+total.toFixed(2);
     document.getElementById("result").innerHTML = breakdown.replace(/\n/g,"<br>");
     quoteCalculated = true;
   }
 }
 
-// WhatsApp
+// --- WhatsApp ---
 function sendWhatsApp(){
   if(!quoteCalculated){ alert("Please calculate quote first."); return; }
-  let msg = `Fast Any Moves Ltd – Instant Quote\nName: ${document.getElementById("name").value}\nPhone: ${document.getElementById("phone").value}\nEmail: ${document.getElementById("email").value}\nMove Date: ${document.getElementById("moveDate").value}\nService: ${document.getElementById("service").options[document.getElementById("service").selectedIndex].text}\nCollection: ${document.getElementById("collection").value} (${document.getElementById("stairsCollection").value})\nVia: ${document.getElementById("via").value} (${document.getElementById("stairsVia").value})\nDelivery: ${document.getElementById("delivery").value} (${document.getElementById("stairsDelivery").value})\nAdditional Info: ${document.getElementById("info").value}\nQuote:\n${document.getElementById("result").innerText}`;
-  window.open("https://wa.me/447846769519?text="+encodeURIComponent(msg), "_blank");
+  let name=document.getElementById("name").value;
+  let phone=document.getElementById("phone").value;
+  let email=document.getElementById("email").value;
+  let moveDate=document.getElementById("moveDate").value;
+  let service=document.getElementById("service").options[document.getElementById("service").selectedIndex].text;
+  let collection=document.getElementById("collection").value;
+  let via=document.getElementById("via").value;
+  let delivery=document.getElementById("delivery").value;
+  let stairsCollection=document.getElementById("stairsCollection").value;
+  let stairsVia=document.getElementById("stairsVia").value;
+  let stairsDelivery=document.getElementById("stairsDelivery").value;
+  let info=document.getElementById("info").value;
+  let quote=document.getElementById("result").innerText;
+  let msg=`Fast Any Moves Ltd – Instant Quote
+Name: ${name}
+Phone: ${phone}
+Email: ${email}
+Move Date: ${moveDate}
+Service: ${service}
+Collection: ${collection} (${stairsCollection})
+Via: ${via} (${stairsVia})
+Delivery: ${delivery} (${stairsDelivery})
+Additional Info: ${info}
+Quote:
+${quote}`;
+  window.open("https://wa.me/447846769519?text="+encodeURIComponent(msg),"_blank");
 }
 
-// Email
+// --- Email ---
 function sendEmail(){
   if(!quoteCalculated){ alert("Please calculate quote first."); return; }
-  emailjs.send(SERVICE_ID, TEMPLATE_ID,{
-    name: document.getElementById("name").value,
-    phone: document.getElementById("phone").value,
-    email: document.getElementById("email").value,
-    move_date: document.getElementById("moveDate").value,
-    service: document.getElementById("service").options[document.getElementById("service").selectedIndex].text,
-    collection: document.getElementById("collection").value,
-    stairs_collection: document.getElementById("stairsCollection").value,
-    via: document.getElementById("via").value,
-    stairs_via: document.getElementById("stairsVia").value,
-    delivery: document.getElementById("delivery").value,
-    stairs_delivery: document.getElementById("stairsDelivery").value,
-    info: document.getElementById("info").value,
-    quote_breakdown: document.getElementById("result").innerText
-  }).then(function(){ alert("Email sent successfully!"); },
-          function(err){ alert("Email sending failed: "+JSON.stringify(err)); });
+  let name=document.getElementById("name").value;
+  let phone=document.getElementById("phone").value;
+  let email=document.getElementById("email").value;
+  let moveDate=document.getElementById("moveDate").value;
+  let service=document.getElementById("service").options[document.getElementById("service").selectedIndex].text;
+  let collection=document.getElementById("collection").value;
+  let via=document.getElementById("via").value;
+  let delivery=document.getElementById("delivery").value;
+  let stairsCollection=document.getElementById("stairsCollection").value;
+  let stairsVia=document.getElementById("stairsVia").value;
+  let stairsDelivery=document.getElementById("stairsDelivery").value;
+  let info=document.getElementById("info").value;
+  let quote=document.getElementById("result").innerText;
+
+  emailjs.send(SERVICE_ID,TEMPLATE_ID,{
+    name:name,
+    phone:phone,
+    email:email,
+    move_date:moveDate,
+    service:service,
+    collection:collection,
+    stairs_collection:stairsCollection,
+    via:via,
+    stairs_via:stairsVia,
+    delivery:delivery,
+    stairs_delivery:stairsDelivery,
+    info:info,
+    quote_breakdown:quote
+  }).then(()=>{alert("Email sent successfully!");},
+          (err)=>{alert("Email sending failed: "+JSON.stringify(err));});
 }
 </script>
 </body>
