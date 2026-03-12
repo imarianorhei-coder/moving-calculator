@@ -172,16 +172,21 @@ emailjs.init("UTKviVTwg9BJjYixe");
 document.getElementById("moveDate").min=new Date().toISOString().slice(0,16);
 
 let quoteCalculated=false;
+let quoteForMessage="";
 
 window.onload=function(){
-new google.maps.places.Autocomplete(document.getElementById('collection'));
-new google.maps.places.Autocomplete(document.getElementById('via'));
-new google.maps.places.Autocomplete(document.getElementById('delivery'));
+
+new google.maps.places.Autocomplete(collection);
+new google.maps.places.Autocomplete(via);
+new google.maps.places.Autocomplete(delivery);
+
 }
 
 document.getElementById("quoteForm").addEventListener("submit",function(e){
+
 e.preventDefault();
 calculateQuote();
+
 });
 
 function calculateQuote(){
@@ -197,10 +202,14 @@ let costStairs=stairsTotal*10*men;
 const serviceDM=new google.maps.DistanceMatrixService();
 
 serviceDM.getDistanceMatrix({
+
 origins:[collection.value],
 destinations:[delivery.value],
 travelMode:"DRIVING"
-},function(response){
+
+},
+
+function(response){
 
 let meters=response.rows[0].elements[0].distance.value;
 let seconds=response.rows[0].elements[0].duration.value;
@@ -214,6 +223,7 @@ let stairsTime=stairsTotal*10*60;
 let estimatedSeconds=seconds+loadingTime+stairsTime;
 
 let hours=Math.ceil((estimatedSeconds/3600)*2)/2;
+
 if(hours<2)hours=2;
 
 let costHours=hours*rate;
@@ -221,14 +231,16 @@ let costHours=hours*rate;
 let congestion=0;
 
 ["EC","WC","W1","SW1","SE1"].forEach(z=>{
+
 if(collection.value.toUpperCase().includes(z)||delivery.value.toUpperCase().includes(z)){
 congestion=18;
 }
+
 });
 
 let total=costHours+costMiles+costStairs+congestion;
 
-let quote=
+let quoteDisplay =
 
 `Estimated working time: ${hours}h
 
@@ -249,7 +261,26 @@ If extra time is needed, half-hour rates apply.
 
 To confirm your booking please contact us using one of the options below.`;
 
-result.innerText=quote;
+quoteForMessage =
+
+`Estimated working time: ${hours}h
+
+Distance: ${miles.toFixed(2)} miles
+
+Cost hours: £${costHours.toFixed(2)}
+Cost miles: £${costMiles.toFixed(2)}
+Cost stairs: £${costStairs.toFixed(2)}
+Congestion charge: £${congestion}
+
+TOTAL: £${total.toFixed(2)}
+
+--------------------------------
+
+This is an estimated quote based on the information provided.
+
+If extra time is needed, half-hour rates apply.`;
+
+result.innerText=quoteDisplay;
 
 bookingButtons.style.display="block";
 
@@ -261,10 +292,6 @@ quoteCalculated=true;
 
 document.getElementById("whatsappBtn").onclick=function(){
 
-let clean=result.innerText.replace(
-"To confirm your booking please contact us using one of the options below.",""
-);
-
 let msg=`Fast Any Moves Booking
 
 Name: ${name.value}
@@ -274,11 +301,9 @@ Email: ${email.value}
 Collection: ${collection.value}
 Delivery: ${delivery.value}
 
-${clean}`;
+${quoteForMessage}`;
 
 window.open("https://wa.me/447846769519?text="+encodeURIComponent(msg));
-
-result.innerText=clean;
 
 }
 
@@ -289,17 +314,15 @@ alert("Please calculate the quote first.");
 return;
 }
 
-let clean=result.innerText.replace(
-"To confirm your booking please contact us using one of the options below.",""
-);
-
 let params={
+
 name:name.value,
 phone:phone.value,
 email:email.value,
 collection:collection.value,
 delivery:delivery.value,
-quote_breakdown:clean
+quote_breakdown:quoteForMessage
+
 };
 
 emailjs.send("service_1e9jyk9","template_0tbv6y9",params)
@@ -308,8 +331,6 @@ emailjs.send("service_1e9jyk9","template_0tbv6y9",params)
 emailjs.send("service_1e9jyk9","template_8qxabwq",params);
 
 alert("Email sent successfully");
-
-result.innerText=clean;
 
 });
 
