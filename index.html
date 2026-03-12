@@ -8,7 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
-
 body{
 font-family:'Poppins',sans-serif;
 background:#f4f7fb;
@@ -24,23 +23,10 @@ border-radius:12px;
 box-shadow:0 8px 25px rgba(0,0,0,0.12);
 }
 
-h1{
-text-align:center;
-color:#0B4DBA;
-}
+h1{text-align:center;color:#0B4DBA;}
+h2{text-align:center;font-weight:400;color:#555;margin-bottom:25px;}
 
-h2{
-text-align:center;
-font-weight:400;
-color:#555;
-margin-bottom:25px;
-}
-
-label{
-font-weight:600;
-display:block;
-margin-top:15px;
-}
+label{font-weight:600;display:block;margin-top:15px;}
 
 input,select,textarea{
 width:100%;
@@ -76,7 +62,6 @@ background:#eef5ff;
 border-radius:8px;
 white-space:pre-line;
 }
-
 </style>
 </head>
 
@@ -174,25 +159,24 @@ document.getElementById("moveDate").min=new Date().toISOString().slice(0,16);
 let quoteCalculated=false;
 
 window.onload=function(){
-
 new google.maps.places.Autocomplete(document.getElementById('collection'));
 new google.maps.places.Autocomplete(document.getElementById('via'));
 new google.maps.places.Autocomplete(document.getElementById('delivery'));
-
 }
 
 document.getElementById("quoteForm").addEventListener("submit",function(e){
-
 e.preventDefault();
 calculateQuote();
-
 });
 
 function calculateQuote(){
 
 let rate=parseFloat(document.getElementById("service").value);
 
-let stairsTotal=parseInt(document.getElementById("stairsCollection").value)+parseInt(document.getElementById("stairsVia").value)+parseInt(document.getElementById("stairsDelivery").value);
+let stairsTotal=
+parseInt(document.getElementById("stairsCollection").value)+
+parseInt(document.getElementById("stairsVia").value)+
+parseInt(document.getElementById("stairsDelivery").value);
 
 let men=(rate===40?1:rate===70?2:rate===100?3:0);
 
@@ -206,15 +190,13 @@ const serviceDM=new google.maps.DistanceMatrixService();
 
 let segments=[];
 
-if(via && via.trim()!==""){
+if(via.trim()!==""){
 segments=[
 {origin:collection,destination:via},
 {origin:via,destination:delivery}
 ];
 }else{
-segments=[
-{origin:collection,destination:delivery}
-];
+segments=[{origin:collection,destination:delivery}];
 }
 
 let totalMeters=0;
@@ -224,12 +206,12 @@ let processed=0;
 segments.forEach(seg=>{
 
 serviceDM.getDistanceMatrix({
-
 origins:[seg.origin],
 destinations:[seg.destination],
 travelMode:"DRIVING"
+},
 
-},function(response){
+function(response,status){
 
 let el=response.rows[0].elements[0];
 
@@ -239,9 +221,7 @@ totalSeconds+=el.duration.value;
 processed++;
 
 if(processed===segments.length){
-
 finish();
-
 }
 
 });
@@ -259,7 +239,6 @@ let stairsTime=stairsTotal*10*60;
 let estimatedSeconds=totalSeconds+loadingTime+stairsTime;
 
 let hours=Math.ceil((estimatedSeconds/3600)*2)/2;
-
 if(hours<2)hours=2;
 
 let costHours=hours*rate;
@@ -267,16 +246,16 @@ let costHours=hours*rate;
 let congestion=0;
 
 ["EC","WC","W1","SW1","SE1"].forEach(z=>{
-
-if(collection.toUpperCase().includes(z)||via.toUpperCase().includes(z)||delivery.toUpperCase().includes(z)){
+if(collection.toUpperCase().includes(z)||
+via.toUpperCase().includes(z)||
+delivery.toUpperCase().includes(z)){
 congestion=18;
 }
-
 });
 
 let total=costHours+costMiles+costStairs+congestion;
 
-let quote=
+let quoteDisplay=
 
 `Estimated working time: ${hours}h
 
@@ -297,10 +276,8 @@ If extra time is needed, half-hour rates apply.
 
 To confirm your booking please contact us using one of the options below.`;
 
-document.getElementById("result").innerText=quote;
-
+document.getElementById("result").innerText=quoteDisplay;
 document.getElementById("bookingButtons").style.display="block";
-
 quoteCalculated=true;
 
 }
@@ -309,13 +286,18 @@ quoteCalculated=true;
 
 document.getElementById("whatsappBtn").onclick=function(){
 
-let cleanQuote=document.getElementById("result").innerText.replace("To confirm your booking please contact us using one of the options below.","");
+let cleanQuote=document.getElementById("result").innerText.replace(
+"To confirm your booking please contact us using one of the options below.",""
+);
 
 let msg=`Fast Any Moves Booking
 
 Name: ${document.getElementById("name").value}
 Phone: ${document.getElementById("phone").value}
 Email: ${document.getElementById("email").value}
+
+Move Date: ${document.getElementById("moveDate").value}
+Service: ${document.getElementById("service").options[document.getElementById("service").selectedIndex].text}
 
 Collection: ${document.getElementById("collection").value}
 Via: ${document.getElementById("via").value}
@@ -334,24 +316,30 @@ alert("Please calculate the quote first.");
 return;
 }
 
-let cleanQuote=document.getElementById("result").innerText.replace("To confirm your booking please contact us using one of the options below.","");
+let cleanQuote=document.getElementById("result").innerText.replace(
+"To confirm your booking please contact us using one of the options below.",""
+);
 
 let params={
 name:document.getElementById("name").value,
 phone:document.getElementById("phone").value,
 email:document.getElementById("email").value,
+move_date:document.getElementById("moveDate").value,
+service:document.getElementById("service").options[document.getElementById("service").selectedIndex].text,
 collection:document.getElementById("collection").value,
+stairs_collection:document.getElementById("stairsCollection").value,
+via:document.getElementById("via").value,
+stairs_via:document.getElementById("stairsVia").value,
 delivery:document.getElementById("delivery").value,
+stairs_delivery:document.getElementById("stairsDelivery").value,
+info:document.getElementById("info").value,
 quote_breakdown:cleanQuote
 };
 
 emailjs.send("service_1e9jyk9","template_0tbv6y9",params)
 .then(function(){
-
 emailjs.send("service_1e9jyk9","template_8qxabwq",params);
-
 alert("Email sent successfully");
-
 });
 
 }
