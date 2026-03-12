@@ -172,7 +172,6 @@ emailjs.init("UTKviVTwg9BJjYixe");
 document.getElementById("moveDate").min=new Date().toISOString().slice(0,16);
 
 let quoteCalculated=false;
-let fullMessage="";
 
 window.onload=function(){
 new google.maps.places.Autocomplete(document.getElementById('collection'));
@@ -187,23 +186,19 @@ calculateQuote();
 
 function calculateQuote(){
 
-let rate=parseFloat(document.getElementById("service").value);
+let rate=parseFloat(service.value);
 
-let stairsTotal=parseInt(document.getElementById("stairsCollection").value)+parseInt(document.getElementById("stairsVia").value)+parseInt(document.getElementById("stairsDelivery").value);
+let stairsTotal=parseInt(stairsCollection.value)+parseInt(stairsVia.value)+parseInt(stairsDelivery.value);
 
 let men=(rate===40?1:rate===70?2:rate===100?3:0);
 
 let costStairs=stairsTotal*10*men;
 
-const collection=document.getElementById("collection").value;
-const via=document.getElementById("via").value;
-const delivery=document.getElementById("delivery").value;
-
 const serviceDM=new google.maps.DistanceMatrixService();
 
 serviceDM.getDistanceMatrix({
-origins:[collection],
-destinations:[delivery],
+origins:[collection.value],
+destinations:[delivery.value],
 travelMode:"DRIVING"
 },function(response){
 
@@ -226,7 +221,7 @@ let costHours=hours*rate;
 let congestion=0;
 
 ["EC","WC","W1","SW1","SE1"].forEach(z=>{
-if(collection.toUpperCase().includes(z)||via.toUpperCase().includes(z)||delivery.toUpperCase().includes(z)){
+if(collection.value.toUpperCase().includes(z)||delivery.value.toUpperCase().includes(z)){
 congestion=18;
 }
 });
@@ -254,10 +249,10 @@ If extra time is needed, half-hour rates apply.
 
 To confirm your booking please contact us using one of the options below.`;
 
-document.getElementById("result").innerText=quote;
-document.getElementById("bookingButtons").style.display="block";
+result.innerText=quote;
 
-fullMessage=quote;
+bookingButtons.style.display="block";
+
 quoteCalculated=true;
 
 });
@@ -265,6 +260,10 @@ quoteCalculated=true;
 }
 
 document.getElementById("whatsappBtn").onclick=function(){
+
+let clean=result.innerText.replace(
+"To confirm your booking please contact us using one of the options below.",""
+);
 
 let msg=`Fast Any Moves Booking
 
@@ -275,11 +274,11 @@ Email: ${email.value}
 Collection: ${collection.value}
 Delivery: ${delivery.value}
 
-${result.innerText}`;
+${clean}`;
 
 window.open("https://wa.me/447846769519?text="+encodeURIComponent(msg));
 
-result.innerText=result.innerText.replace("To confirm your booking please contact us using one of the options below.","");
+result.innerText=clean;
 
 }
 
@@ -290,13 +289,17 @@ alert("Please calculate the quote first.");
 return;
 }
 
+let clean=result.innerText.replace(
+"To confirm your booking please contact us using one of the options below.",""
+);
+
 let params={
 name:name.value,
 phone:phone.value,
 email:email.value,
 collection:collection.value,
 delivery:delivery.value,
-quote_breakdown:fullMessage
+quote_breakdown:clean
 };
 
 emailjs.send("service_1e9jyk9","template_0tbv6y9",params)
@@ -306,7 +309,7 @@ emailjs.send("service_1e9jyk9","template_8qxabwq",params);
 
 alert("Email sent successfully");
 
-result.innerText=result.innerText.replace("To confirm your booking please contact us using one of the options below.","");
+result.innerText=clean;
 
 });
 
