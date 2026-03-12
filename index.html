@@ -156,11 +156,8 @@ white-space:pre-line;
 <div id="result" class="result"></div>
 
 <div id="bookingButtons" style="display:none;margin-top:10px;">
-
 <button id="whatsappBtn">Book via WhatsApp</button>
-
 <button id="emailBtn">Book via Email</button>
-
 </div>
 
 </div>
@@ -177,34 +174,15 @@ document.getElementById("moveDate").min=new Date().toISOString().slice(0,16);
 let quoteCalculated=false;
 let fullMessage="";
 
-function formatDate(dateValue){
-
-let d=new Date(dateValue);
-
-let day=String(d.getDate()).padStart(2,'0');
-let month=String(d.getMonth()+1).padStart(2,'0');
-let year=d.getFullYear();
-
-let hours=String(d.getHours()).padStart(2,'0');
-let minutes=String(d.getMinutes()).padStart(2,'0');
-
-return `${day}/${month}/${year} - ${hours}:${minutes}`;
-
-}
-
 window.onload=function(){
-
 new google.maps.places.Autocomplete(document.getElementById('collection'));
 new google.maps.places.Autocomplete(document.getElementById('via'));
 new google.maps.places.Autocomplete(document.getElementById('delivery'));
-
 }
 
 document.getElementById("quoteForm").addEventListener("submit",function(e){
-
 e.preventDefault();
 calculateQuote();
-
 });
 
 function calculateQuote(){
@@ -224,14 +202,10 @@ const delivery=document.getElementById("delivery").value;
 const serviceDM=new google.maps.DistanceMatrixService();
 
 serviceDM.getDistanceMatrix({
-
 origins:[collection],
 destinations:[delivery],
 travelMode:"DRIVING"
-
-},
-
-function(response){
+},function(response){
 
 let meters=response.rows[0].elements[0].distance.value;
 let seconds=response.rows[0].elements[0].duration.value;
@@ -240,20 +214,22 @@ let miles=meters/1609.34;
 let costMiles=miles*1.5;
 
 let loadingTime=30*60;
-
 let stairsTime=stairsTotal*10*60;
 
 let estimatedSeconds=seconds+loadingTime+stairsTime;
 
 let hours=Math.ceil((estimatedSeconds/3600)*2)/2;
-
 if(hours<2)hours=2;
 
 let costHours=hours*rate;
 
 let congestion=0;
 
-if(collection.includes("EC")||delivery.includes("EC")) congestion=18;
+["EC","WC","W1","SW1","SE1"].forEach(z=>{
+if(collection.toUpperCase().includes(z)||via.toUpperCase().includes(z)||delivery.toUpperCase().includes(z)){
+congestion=18;
+}
+});
 
 let total=costHours+costMiles+costStairs+congestion;
 
@@ -279,11 +255,9 @@ If extra time is needed, half-hour rates apply.
 To confirm your booking please contact us using one of the options below.`;
 
 document.getElementById("result").innerText=quote;
-
 document.getElementById("bookingButtons").style.display="block";
 
 fullMessage=quote;
-
 quoteCalculated=true;
 
 });
@@ -305,6 +279,8 @@ ${result.innerText}`;
 
 window.open("https://wa.me/447846769519?text="+encodeURIComponent(msg));
 
+result.innerText=result.innerText.replace("To confirm your booking please contact us using one of the options below.","");
+
 }
 
 document.getElementById("emailBtn").onclick=function(){
@@ -315,15 +291,12 @@ return;
 }
 
 let params={
-
 name:name.value,
 phone:phone.value,
 email:email.value,
-move_date:formatDate(moveDate.value),
 collection:collection.value,
 delivery:delivery.value,
 quote_breakdown:fullMessage
-
 };
 
 emailjs.send("service_1e9jyk9","template_0tbv6y9",params)
@@ -332,6 +305,8 @@ emailjs.send("service_1e9jyk9","template_0tbv6y9",params)
 emailjs.send("service_1e9jyk9","template_8qxabwq",params);
 
 alert("Email sent successfully");
+
+result.innerText=result.innerText.replace("To confirm your booking please contact us using one of the options below.","");
 
 });
 
